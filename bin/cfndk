@@ -1,0 +1,121 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+
+require 'rainbow/ext/string'
+require 'optparse'
+require 'fileutils'
+require 'pathname'
+require 'erb'
+require 'yaml'
+require 'json'
+require 'aws-sdk'
+require 'terminal-table'
+require 'securerandom'
+
+require 'cfndk.rb'
+
+cur_dir = Dir.getwd
+
+option = {
+  config_path: "#{cur_dir}/cfndk.yml",
+  uuid: ENV['CFNDK_UUID'] || nil,
+  properties: {},
+}
+
+opt = OptionParser.new do |o|
+  o.version = CFnDK::VERSION
+  o.summary_indent = ' ' * 4
+  o.banner = 'Usage: cfndk [cmd] [options]'
+  o.on_head('[cmd]',
+            '    init                  create config YAML file',
+            '    create                create stacks',
+            '    update                update stacks',
+            '    create-or-changeset   create stacks or create changeset',
+            '    destroy               destroy stacks',
+            '    generate-uuid         generate UUID',
+            '    report-event          report stack event',
+            '    report-stack          report stack',
+            '    report-stack-resource report stack resource',
+            '[enviroment variables]',
+            "    AWS_PROFILE: #{ENV['AWS_PROFILE']}",
+            "    AWS_DEFAULT_REGION: #{ENV['AWS_DEFAULT_REGION']}",
+            "    AWS_REGION: #{ENV['AWS_REGION']}",
+            "    AWS_ACCESS_KEY_ID: #{ENV['AWS_ACCESS_KEY_ID']}",
+            "    AWS_SECRET_ACCESS_KEY: #{ENV['AWS_SECRET_ACCESS_KEY']}",
+            "    AWS_SESSION_TOKEN: #{ENV['AWS_SECRET_ACCESS_KEY']}",
+            "    AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: #{ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']}",
+            '[options]')
+  o.on('-v', '--verbose', 'verbose mode') { |v| option[:v] = v }
+  o.on('-c', '--config_path <cfndi.yml>', "config path (default: #{option[:config_path]})") { |v| option[:config_path] = v }
+  o.on('-p', '--properties <name>=<value>', 'properties') do |v|
+    md = v.match(/^([a-zA-Z_]+[a-zA-Z0-9_]*)=(.*)$/)
+    if md
+      option[:properties][md[0]] = md[1]
+    else
+      raise "invalid properties: '#{v}'" unless md
+    end
+  end
+  o.on('-a', '--auto-uuid') { option[:uuid] = SecureRandom.uuid }
+  o.on('-u', '--uuid <uuid>') { |v| option[:uuid] = v }
+  o.permute!(ARGV)
+end
+
+if ARGV.length != 1
+  puts opt.help
+  exit 1
+elsif ARGV[0] == 'generate-uuid'
+  puts SecureRandom.uuid
+  exit 0
+end
+
+unless File.file?(option[:config_path]) || ARGV[0] == 'init'
+  puts "File does not exist. #{option[:config_path]}".color :red
+  exit 1
+end
+
+$LOAD_PATH.unshift "#{cur_dir}/lib"
+$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
+
+data = open(option[:config_path], 'r') { |f| YAML.load(f) } if File.file?(option[:config_path]) && ARGV[0] != 'init'
+
+credentials = CFnDK::Aws::CredentialProviderChain.new.resolve
+client = Aws::CloudFormation::Client.new(credentials: credentials)
+stacks = CFnDK::Stacks.new(data, option, client)
+
+if ARGV[0] == 'create'
+  puts 'create...'.color :green
+  puts 'using uuid: ' + option[:uuid]
+  stacks.create
+elsif ARGV[0] == 'update'
+  puts 'update...'.color :green
+  stacks.update
+elsif ARGV[0] == 'create-or-changeset'
+  puts 'create or changeset...'.color :green
+  stacks.create_or_changeset
+elsif ARGV[0] == 'destroy'
+  puts 'destroy...'.color :green
+  stacks.destroy
+elsif ARGV[0] == 'report-event'
+  puts 'report event...'.color :green
+  stacks.report_event
+elsif ARGV[0] == 'report-stack'
+  puts 'report stack...'.color :green
+  stacks.report_stack
+elsif ARGV[0] == 'report-stack-resource'
+  puts 'report stack resource...'.color :green
+  stacks.report_stack_resource
+elsif ARGV[0] == 'init'
+  if File.file?(option[:config_path])
+    puts "File exist. #{option[:config_path]}".color :red
+    exit 1
+  end
+  puts 'init...'.color :green
+  FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../skel/*'), './')
+  puts "create #{option[:config_path]}".color :green
+else
+  puts opt.help
+  exit 1
+end
+
+exit 0

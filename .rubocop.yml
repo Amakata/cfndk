@@ -1,0 +1,23 @@
+AsciiComments:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 160
+
+Metrics/AbcSize:
+  Max: 30
+
+Metrics/ClassLength:
+  Max: 102
+
+Style/MethodLength:
+  Max: 30
+
+Style/Documentation:
+  Enabled: false
+
+AllCops:
+  Exclude:
+    - 'cookbooks/**'
+    - '.chef/**'
+    - '.bundle/**'
