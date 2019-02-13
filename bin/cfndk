@@ -79,7 +79,7 @@ $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
 data = open(option[:config_path], 'r') { |f| YAML.load(f) } if File.file?(option[:config_path]) && ARGV[0] != 'init'
 
-credentials = CFnDK::Aws::CredentialProviderChain.new.resolve
+credentials = CFnDK::CredentialProviderChain.new.resolve
 client = Aws::CloudFormation::Client.new(credentials: credentials)
 stacks = CFnDK::Stacks.new(data, option, client)
 
