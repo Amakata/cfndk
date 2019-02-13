@@ -1,0 +1,39 @@
+stacks:
+  Network:
+    template_file: network/network.yaml 
+    parameter_input: network/prod.json
+    parameters:
+      VpcName: Prod<%= append_uuid %>
+      InternalDnsName: prod<%= append_uuid %>.local
+    timeout_in_minutes: 8
+  Iam:
+    template_file: iam/iam.yaml
+    parameter_input: iam/prod.json
+    parameters:
+      WebRoleName: WebRole<%= append_uuid %>
+      WebInstanceProfileName: WebInstanceProfile<%= append_uuid %>
+    capabilities:
+      - CAPABILITY_IAM
+      - CAPABILITY_NAMED_IAM
+    timeout_in_minutes: 3
+  Sg:
+    template_file: sg/sg.yaml
+    parameter_input: sg/prod.json
+    parameters:
+    depends:
+    - Network
+  Web:
+    template_file: web/web.yaml
+    parameter_input: web/prod.json
+    parameters:
+    depends:
+    - Sg
+    - Iam
+    timeout_in_minutes: 2
+  Db:
+    template_file: db/db.yaml
+    parameter_input: db/prod.json
+    parameters:
+    depends:
+    - Sg
+    timeout_in_minutes: 30

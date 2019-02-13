@@ -85,7 +85,6 @@ stacks = CFnDK::Stacks.new(data, option, client)
 
 if ARGV[0] == 'create'
   puts 'create...'.color :green
-  puts 'using uuid: ' + option[:uuid]
   stacks.create
 elsif ARGV[0] == 'update'
   puts 'update...'.color :green
