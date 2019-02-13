@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = CFnDK::VERSION
   spec.authors       = ['Yoshihisa AMAKATA']
   spec.email         = ['amakata@gmail.com']
-  spec.summary       = 'cfn-dk is AWS Cloud Formation Development Kit'
-  spec.description   = 'cfn-dk is AWS Cloud Formation Development Kit'
+  spec.summary       = 'cfndk is AWS Cloud Formation Development Kit'
+  spec.description   = 'cfndk is AWS Cloud Formation Development Kit'
   spec.homepage      = 'https://github.com/Amakata/cfndk'
   spec.license       = 'http://www.apache.org/licenses/license-2.0'
 
