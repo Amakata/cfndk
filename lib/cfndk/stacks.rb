@@ -8,6 +8,7 @@ module CFnDK
     end
 
     def create
+      validate
       @sequence.each do |stacks|
         stacks.each do |name|
           puts(('creating ' + name).color(:green))
@@ -40,6 +41,7 @@ module CFnDK
     end
 
     def update
+      validate
       @sequence.each do |stacks|
         updating_stacks = []
         stacks.each do |name|
@@ -71,6 +73,7 @@ module CFnDK
     end
 
     def create_or_changeset
+      validate
       @sequence.each do |stacks|
         create_stacks = []
         changeset_stacks = []
@@ -79,7 +82,7 @@ module CFnDK
             @cfn_client.describe_stacks(
               stack_name: @stacks[name].name
             )
-            puts(('creating ' + name + @option[:uuid]).color(:green))
+            puts(('creating ' + name).color(:green))
             puts('Name        :' + @stacks[name].name) if @option[:v]
             puts('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
             puts('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
@@ -88,7 +91,7 @@ module CFnDK
               template_body: @stacks[name].template_body,
               parameters: @stacks[name].parameters,
               capabilities: @stacks[name].capabilities,
-              change_set_name:  @stacks[name].name + @option[:uuid]
+              change_set_name:  @stacks[name].name,
             )
             changeset_stacks.push name
           rescue Aws::CloudFormation::Errors::ValidationError
@@ -119,25 +122,25 @@ module CFnDK
             @cfn_client.wait_until(
               :change_set_create_complete,
               stack_name: @stacks[name].name,
-              change_set_name: @stacks[name].name + @option[:uuid]
+              change_set_name: @stacks[name].name
             )
-            puts(('created ' + @stacks[name].name + @option[:uuid]).color(:green))
+            puts(('created ' + @stacks[name].name).color(:green))
           rescue Aws::Waiters::Errors::FailureStateError => ex
             resp = @cfn_client.describe_change_set(
-              change_set_name: @stacks[name].name + @option[:uuid],
-              stack_name: @stacks[name].name
+              change_set_name: @stacks[name].name,
+              stack_name: @stacks[name].name,
             )
             if resp.status_reason != "The submitted information didn't contain changes. Submit different information to create a change set."
               puts ex.message.color :red
               raise ex
             else
-              puts(('failed ' + @stacks[name].name + @option[:uuid]).color(:red))
+              puts(('failed ' + @stacks[name].name).color(:red))
               puts resp.status_reason
               @cfn_client.delete_change_set(
-                change_set_name: @stacks[name].name + @option[:uuid],
-                stack_name: @stacks[name].name
+                change_set_name: @stacks[name].name,
+                stack_name: @stacks[name].name,
               )
-              puts(('deleted ' + @stacks[name].name + @option[:uuid]).color(:red))
+              puts(('deleted ' + @stacks[name].name).color(:red))
             end
           end
         end
@@ -275,6 +278,18 @@ module CFnDK
             stack_name: @stacks[name].name
           )
           puts(('deleted ' + name).color(:green))
+        end
+      end
+    end
+
+    def validate
+      @sequence.each do |stacks|
+        stacks.each do |name|
+          puts(('validate ' + name).color(:green))
+          puts('Name        :' + @stacks[name].name) if @option[:v]
+          @cfn_client.validate_template(
+            template_body: @stacks[name].template_body
+          )
         end
       end
     end
