@@ -166,9 +166,14 @@ UUIDが指定されるとスタック名に付加されます。
 
 ```
 stacks:
+  Stack1:
+    template_file: stack1/stack1.yaml 
+    parameter_input: stack1/env.json
+    parameters:
+      VpcName: Prod<%= append_uuid %>
   Stack2:
     template_file: stack2/stack2.yaml 
-    parameter_input: stacn2/env.json
+    parameter_input: stack2/env.json
     parameters:
       VpcName: Prod<%= append_uuid %>
     capabilities:
