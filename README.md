@@ -1,7 +1,14 @@
 # AWS CloudFormation Development Kit
 
 This is easy operation/integration support tool for AWS CloudFormation.
+
 このツールは、AWS CloudFromationのための簡単な運用/構築サポートツールです。
+
+## ハイライト
+
+* 複数のスタックをワンコマンドで作成/更新/削除
+* 複数のスタックの依存関係を考慮した操作
+* CloudFormationでバージョンコントロールシステムと連動した継続的インテグレーションのための基盤対応
 
 ## インストール
 
@@ -32,7 +39,7 @@ cfndk [cmd] [options]
 
 ### [cmd]
 
-#### 初期化
+#### ```init```
 
 カレントディレクトリにcfndk.yamlのひな形を作成します。
 
@@ -40,7 +47,7 @@ cfndk [cmd] [options]
 cfndk init [option]
 ```
 
-#### スタックの作成
+#### ```create```
 
 cfndk.yamlで定義されているスタックを作成します。
 
@@ -48,7 +55,7 @@ cfndk.yamlで定義されているスタックを作成します。
 cfndk create [option]
 ```
 
-#### スタック更新
+#### ```update```
 
 cfndk.yamlで定義されているスタックを更新します。
 
@@ -56,17 +63,17 @@ cfndk.yamlで定義されているスタックを更新します。
 cfndk update [option]
 ```
 
-#### スタックの作成、changeset作成
+#### ```create-or-changeset```
 
 cfndk.yamlで定義されているスタックが存在しない場合は作成を、存在する場合はチェンジセットを作成します。
 チェンジセットの実行は行いません。
 コマンドを実行後に手動で実行する必要があります。
 
 ```
-cfndk ｃreate-or-changeset [option]
+cfndk create-or-changeset [option]
 ```
 
-#### スタックの破壊
+#### ```destroy```
 
 cfndk.yamlで定義されているスタックを削除します。
 
@@ -74,7 +81,7 @@ cfndk.yamlで定義されているスタックを削除します。
 cfndk destroy [option]
 ```
 
-#### UUIDの生成
+#### ```generate-uuid```
 
 UUIDを生成して標準出力に出力します。
 
@@ -88,9 +95,10 @@ cfndk generate-uuid
 export CFNDK_UUID=`cfndk generate-uuid`
 cfndk create
 cfndk destroy
+unset CFNDK_UUID
 ```
 
-#### スタックのイベントのレポート
+#### ```report-event```
 
 cfndk.yamlで定義されているスタックのイベント情報をレポートします。
 
@@ -98,7 +106,7 @@ cfndk.yamlで定義されているスタックのイベント情報をレポー�
 cfndk report-event [option]
 ```
 
-#### スタックのスタックのレポート
+#### ```report-stack```
 
 cfndk.yamlで定義されているスタックの情報をレポートします。
 
@@ -106,7 +114,7 @@ cfndk.yamlで定義されているスタックの情報をレポートします�
 cfndk report-stack [option]
 ```
 
-#### スタックのスタックリソースのレポート
+#### ```eport-stack-resource```
 
 cfndk.yamlで定義されているスタックのリソース情報をレポートします。
 
@@ -116,27 +124,27 @@ cfndk report-stack-resource [option]
 
 ### [option]
 
-#### -v --verbose
+#### ```-v --verbose```
 
 実行時に詳細な情報を表示します。
 
-#### -c, --config_path <cfndi.yml>
+#### ```-c, --config_path <cfndi.yml>```
 
 カレントディレクトリのcfndi.ymlの代わりに、ファイルを指定します。
 
-#### -p, --properties <name>=<value>
+#### ```-p, --properties <name>=<value>```
 
 プロパティを追加します。
-cfndi.ymlのparametersの値で参照することができます。
+cfndi.ymlのparametersのerb内で値で参照することができます。
 
-#### -a, --auto-uuid
+#### ```-a, --auto-uuid```
 
 UUIDを自動生成し使用します。
 UUIDが指定されるとスタック名に付加されます。
 またcfndi.ymlのparametersの値で参照することができます。
 ```-a```と```-u```は最後に指定されたものが有効になります。
 
-####  -u, --uuid <uuid>
+####  ```-u, --uuid <uuid>```
 
 指定されたUUIDを使用します。
 UUIDが指定されるとスタック名に付加されます。
@@ -146,7 +154,7 @@ UUIDが指定されるとスタック名に付加されます。
 
 ## 環境変数
 
-### CFNDK_UUID
+### ```CFNDK_UUID```
 
 この環境変数が指定されている場合、```--uuid $CFNDK_UUID```が指定されたものとして動作します。
 ```-a```や```-u```のほうが優先されます。
@@ -281,8 +289,3 @@ dependsが循環するような指定をすることはできません。
 ```
     timeout_in_minutes: 5
 ```
-
-
-
-
-
