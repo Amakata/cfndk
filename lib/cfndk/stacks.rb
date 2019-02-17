@@ -10,6 +10,7 @@ module CFnDK
     def create
       @sequence.each do |stacks|
         stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           puts(('creating ' + name).color(:green))
           puts('Name        :' + @stacks[name].name) if @option[:v]
           puts('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
@@ -24,6 +25,7 @@ module CFnDK
           )
         end
         stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           begin
             @cfn_client.wait_until(
               :stack_create_complete,
@@ -43,6 +45,7 @@ module CFnDK
       @sequence.each do |stacks|
         updating_stacks = []
         stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           puts(('updating ' + name).color(:green))
           puts('Name        :' + @stacks[name].name) if @option[:v]
           puts('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
@@ -61,6 +64,7 @@ module CFnDK
           end
         end
         updating_stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           @cfn_client.wait_until(
             :stack_update_complete,
             stack_name: @stacks[name].name
@@ -75,6 +79,7 @@ module CFnDK
         create_stacks = []
         changeset_stacks = []
         stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           begin
             @cfn_client.describe_stacks(
               stack_name: @stacks[name].name
@@ -108,6 +113,7 @@ module CFnDK
           end
         end
         create_stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           @cfn_client.wait_until(
             :stack_create_complete,
             stack_name: @stacks[name].name
@@ -115,6 +121,7 @@ module CFnDK
           puts(('created ' + name).color(:green))
         end
         changeset_stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           begin
             @cfn_client.wait_until(
               :change_set_create_complete,
@@ -263,6 +270,7 @@ module CFnDK
     def destroy
       @sequence.reverse_each do |stacks|
         stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           puts(('deleting ' + name).color(:green))
           puts('Name        :' + @stacks[name].name) if @option[:v]
           @cfn_client.delete_stack(
@@ -270,6 +278,7 @@ module CFnDK
           )
         end
         stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           @cfn_client.wait_until(
             :stack_delete_complete,
             stack_name: @stacks[name].name
@@ -282,6 +291,7 @@ module CFnDK
     def validate
       @sequence.each do |stacks|
         stacks.each do |name|
+          next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
           puts(('validate ' + name).color(:green))
           puts('Name        :' + @stacks[name].name) if @option[:v]
           @cfn_client.validate_template(

@@ -138,11 +138,11 @@ cfndk report-stack-resource [option]
 
 実行時に詳細な情報を表示します。
 
-#### ```-c, --config_path <cfndi.yml>```
+#### ```-c, --config_path cfndi.yml```
 
 カレントディレクトリのcfndi.ymlの代わりに、ファイルを指定します。
 
-#### ```-p, --properties <name>=<value>```
+#### ```-p, --properties name=value```
 
 プロパティを追加します。
 cfndi.ymlのparametersのerb内で値で参照することができます。
@@ -154,13 +154,24 @@ UUIDが指定されるとスタック名に付加されます。
 またcfndi.ymlのparametersの値で参照することができます。
 ```-a```と```-u```は最後に指定されたものが有効になります。
 
-####  ```-u, --uuid <uuid>```
+####  ```-u, --uuid uuid```
 
 指定されたUUIDを使用します。
 UUIDが指定されるとスタック名に付加されます。
 またcfndi.ymlのparametersの値で参照することができます。
 ```-a```と```-u```は最後に指定されたものが有効になります。
 
+#### ```-s, --stack-names name1,name2```
+
+create,update,destroy,create_or_changesetのコマンドで、指定されたスタック名のみを操作します。
+
+#### ```--no-color```
+
+メッセージ出力でカラーを抑制します。
+
+### ```-f, --force```
+
+動作の確認メッセージと入力をスキップします。
 
 ## 環境変数
 

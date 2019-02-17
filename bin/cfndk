@@ -15,6 +15,20 @@ require 'securerandom'
 
 require 'cfndk.rb'
 
+def do_destroy(option)
+  return true if option[:force]
+  loop do
+    print 'destroy? [yes|no]:'
+    res = STDIN.gets
+    case res
+    when /^yes/
+      return true
+    when /^no/, /^$/
+      return false
+    end
+  end
+end
+
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
 cur_dir = Dir.getwd
@@ -23,12 +37,14 @@ option = {
   config_path: "#{cur_dir}/cfndk.yml",
   uuid: ENV['CFNDK_UUID'] || nil,
   properties: {},
+  stack_names: nil,
+  force: false,
 }
 
 opt = OptionParser.new do |o|
   o.version = CFnDK::VERSION
   o.summary_indent = ' ' * 4
-  o.banner = 'Usage: cfndk [cmd] [options]'
+  o.banner = "Version: #{CFnDK::VERSION} \nUsage: cfndk [cmd] [options]"
   o.on_head('[cmd]',
             '    init                  create config YAML file',
             '    create                create stacks',
@@ -49,8 +65,8 @@ opt = OptionParser.new do |o|
             "    AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: #{ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']}",
             '[options]')
   o.on('-v', '--verbose', 'verbose mode') { |v| option[:v] = v }
-  o.on('-c', '--config_path <cfndi.yml>', "config path (default: #{option[:config_path]})") { |v| option[:config_path] = v }
-  o.on('-p', '--properties <name>=<value>', 'properties') do |v|
+  o.on('-c', '--config_path cfndi.yml', "config path (default: #{option[:config_path]})") { |v| option[:config_path] = v }
+  o.on('-p', '--properties name=value', 'properties') do |v|
     md = v.match(/^([a-zA-Z_]+[a-zA-Z0-9_]*)=(.*)$/)
     if md
       option[:properties][md[0]] = md[1]
@@ -59,7 +75,10 @@ opt = OptionParser.new do |o|
     end
   end
   o.on('-a', '--auto-uuid') { option[:uuid] = SecureRandom.uuid }
-  o.on('-u', '--uuid <uuid>') { |v| option[:uuid] = v }
+  o.on('-u', '--uuid uuid') { |v| option[:uuid] = v }
+  o.on('-n', '--stack-names name1,name2') { |v| option[:stack_names] = v.split(/\s*,\s*/) }
+  o.on('--no-color') { |b| Rainbow.enabled = false }
+  o.on('-f', '--force') { |b| option[:force] = true }
   o.permute!(ARGV)
 end
 
@@ -105,8 +124,10 @@ elsif ARGV[0] == 'create-or-changeset'
   stacks.create_or_changeset
 elsif ARGV[0] == 'destroy'
   puts 'destroy...'.color :green
-  stacks.destroy
-  keypairs.destroy
+  if do_destroy(option)
+    stacks.destroy
+    keypairs.destroy
+  end
 elsif ARGV[0] == 'validate'
   puts 'validate...'.color :green
   stacks.validate

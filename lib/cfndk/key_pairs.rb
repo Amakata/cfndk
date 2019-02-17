@@ -7,10 +7,12 @@ module CFnDK
     end
 
     def create
+      return if @option[:stack_names].instance_of?(Array)
       @keypairs.each_value(&:create)
     end
 
     def destroy
+      return if @option[:stack_names].instance_of?(Array)
       @keypairs.each_value(&:destroy)
     end
 
