@@ -98,6 +98,10 @@ cfndk destroy
 unset CFNDK_UUID
 ```
 
+#### ```validate```
+
+cfndk.yamlで定義されているスタックのテンプレートをvalidationします。
+
 #### ```report-event```
 
 cfndk.yamlで定義されているスタックのイベント情報をレポートします。
@@ -114,7 +118,7 @@ cfndk.yamlで定義されているスタックの情報をレポートします�
 cfndk report-stack [option]
 ```
 
-#### ```eport-stack-resource```
+#### ```report-stack-resource```
 
 cfndk.yamlで定義されているスタックのリソース情報をレポートします。
 
