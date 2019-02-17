@@ -12,6 +12,7 @@ require 'json'
 require 'aws-sdk'
 require 'terminal-table'
 require 'securerandom'
+require 'logger'
 
 require 'cfndk.rb'
 
@@ -82,6 +83,8 @@ opt = OptionParser.new do |o|
   o.permute!(ARGV)
 end
 
+logger = CFnDK::Logger.new(option)
+
 if ARGV.length != 1
   puts opt.help
   exit 1
@@ -90,17 +93,17 @@ elsif ARGV[0] == 'generate-uuid'
   exit 0
 elsif ARGV[0] == 'init'
   if File.file?(option[:config_path])
-    puts "File exist. #{option[:config_path]}".color :red
+    logger.error "File exist. #{option[:config_path]}".color(:red)
     exit 1
   end
-  puts 'init...'.color :green
+  logger.info 'init...'.color(:green)
   FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../skel/*'), './')
-  puts "create #{option[:config_path]}".color :green
+  logger.info "create #{option[:config_path]}".color(:green)
   exit 0
 end
 
 unless File.file?(option[:config_path])
-  puts "File does not exist. #{option[:config_path]}".color :red
+  logger.error "File does not exist. #{option[:config_path]}".color(:red)
   exit 1
 end
 
@@ -110,35 +113,35 @@ stacks = CFnDK::Stacks.new(data, option, credentials)
 keypairs = CFnDK::KeyPairs.new(data, option, credentials)
 
 if ARGV[0] == 'create'
-  puts 'create...'.color :green
+  logger.info 'create...'.color(:green)
   stacks.validate
   keypairs.create
   stacks.create
 elsif ARGV[0] == 'update'
-  puts 'update...'.color :green
+  logger.info 'update...'.color(:green)
   stacks.validate
   stacks.update
 elsif ARGV[0] == 'create-or-changeset'
-  puts 'create or changeset...'.color :green
+  logger.info 'create or changeset...'.color(:green)
   stacks.validate
   stacks.create_or_changeset
 elsif ARGV[0] == 'destroy'
-  puts 'destroy...'.color :green
+  logger.info 'destroy...'.color(:green)
   if do_destroy(option)
     stacks.destroy
     keypairs.destroy
   end
 elsif ARGV[0] == 'validate'
-  puts 'validate...'.color :green
+  logger.info 'validate...'.color(:green)
   stacks.validate
 elsif ARGV[0] == 'report-event'
-  puts 'report event...'.color :green
+  logger.info 'report event...'.color(:green)
   stacks.report_event
 elsif ARGV[0] == 'report-stack'
-  puts 'report stack...'.color :green
+  logger.info 'report stack...'.color(:green)
   stacks.report_stack
 elsif ARGV[0] == 'report-stack-resource'
-  puts 'report stack resource...'.color :green
+  logger.info 'report stack resource...'.color(:green)
   stacks.report_stack_resource
 else
   puts opt.help

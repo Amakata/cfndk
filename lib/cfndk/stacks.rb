@@ -2,6 +2,8 @@ module CFnDK
   class Stacks
     def initialize(data, option, credentials)
       @option = option
+      @logger = CFnDK::Logger.new(option)
+
       @cfn_client = Aws::CloudFormation::Client.new(credentials: credentials)
       create_stack data
       create_sequence
@@ -11,11 +13,11 @@ module CFnDK
       @sequence.each do |stacks|
         stacks.each do |name|
           next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
-          puts(('creating ' + name).color(:green))
-          puts('Name        :' + @stacks[name].name) if @option[:v]
-          puts('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
-          puts('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
-          puts('timeout     :' + @stacks[name].timeout_in_minutes.to_s) if @option[:v]
+          @logger.info(('creating ' + name).color(:green))
+          @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
+          @logger.debug('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
+          @logger.debug('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
+          @logger.debug('timeout     :' + @stacks[name].timeout_in_minutes.to_s) if @option[:v]
           @cfn_client.create_stack(
             stack_name: @stacks[name].name,
             template_body: @stacks[name].template_body,
@@ -31,9 +33,9 @@ module CFnDK
               :stack_create_complete,
               stack_name: @stacks[name].name
             )
-            puts(('created ' + name).color(:green))
+            @logger.info(('created ' + name).color(:green))
           rescue Aws::Waiters::Errors::FailureStateError => ex
-            puts ex.message
+            @logger.error ex.message
             report_event
             raise ex
           end
@@ -46,11 +48,11 @@ module CFnDK
         updating_stacks = []
         stacks.each do |name|
           next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
-          puts(('updating ' + name).color(:green))
-          puts('Name        :' + @stacks[name].name) if @option[:v]
-          puts('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
-          puts('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
-          puts('timeout     :' + @stacks[name].timeout_in_minutes.to_s) if @option[:v]
+          @logger.info(('updating ' + name).color(:green))
+          @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
+          @logger.debug('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
+          @logger.debug('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
+          @logger.debug('timeout     :' + @stacks[name].timeout_in_minutes.to_s) if @option[:v]
           begin
             @cfn_client.update_stack(
               stack_name: @stacks[name].name,
@@ -60,7 +62,7 @@ module CFnDK
             )
             updating_stacks.push name
           rescue Aws::CloudFormation::Errors::ValidationError => ex
-            puts ex.message.color :red
+            @logger.error ex.message.color(:red)
           end
         end
         updating_stacks.each do |name|
@@ -69,7 +71,7 @@ module CFnDK
             :stack_update_complete,
             stack_name: @stacks[name].name
           )
-          puts(('updated ' + name).color(:green))
+          @logger.info(('updated ' + name).color(:green))
         end
       end
     end
@@ -84,10 +86,10 @@ module CFnDK
             @cfn_client.describe_stacks(
               stack_name: @stacks[name].name
             )
-            puts(('creating ' + name).color(:green))
-            puts('Name        :' + @stacks[name].name) if @option[:v]
-            puts('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
-            puts('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
+            @logger.info(('creating ' + name).color(:green))
+            @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
+            @logger.debug('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
+            @logger.debug('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
             @cfn_client.create_change_set(
               stack_name: @stacks[name].name,
               template_body: @stacks[name].template_body,
@@ -97,11 +99,11 @@ module CFnDK
             )
             changeset_stacks.push name
           rescue Aws::CloudFormation::Errors::ValidationError
-            puts(('creating ' + name).color(:green))
-            puts('Name        :' + @stacks[name].name) if @option[:v]
-            puts('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
-            puts('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
-            puts('timeout     :' + @stacks[name].timeout_in_minutes.to_s) if @option[:v]
+            @logger.info(('creating ' + name).color(:green))
+            @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
+            @logger.debug('Parametres  :' + @stacks[name].parameters.inspect) if @option[:v]
+            @logger.debug('Capabilities:' + @stacks[name].capabilities.inspect) if @option[:v]
+            @logger.debug('timeout     :' + @stacks[name].timeout_in_minutes.to_s) if @option[:v]
             @cfn_client.create_stack(
               stack_name: @stacks[name].name,
               template_body: @stacks[name].template_body,
@@ -118,7 +120,7 @@ module CFnDK
             :stack_create_complete,
             stack_name: @stacks[name].name
           )
-          puts(('created ' + name).color(:green))
+          @logger.info(('created ' + name).color(:green))
         end
         changeset_stacks.each do |name|
           next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
@@ -128,23 +130,23 @@ module CFnDK
               stack_name: @stacks[name].name,
               change_set_name: @stacks[name].name
             )
-            puts(('created ' + @stacks[name].name).color(:green))
+            @logger.info(('created ' + @stacks[name].name).color(:green))
           rescue Aws::Waiters::Errors::FailureStateError => ex
             resp = @cfn_client.describe_change_set(
               change_set_name: @stacks[name].name,
               stack_name: @stacks[name].name,
             )
             if resp.status_reason != "The submitted information didn't contain changes. Submit different information to create a change set."
-              puts ex.message.color :red
+              @logger.error ex.message.color(:red)
               raise ex
             else
-              puts(('failed ' + @stacks[name].name).color(:red))
-              puts resp.status_reason
+              logger.error(('failed ' + @stacks[name].name).color(:red))
+              logger.error resp.status_reason
               @cfn_client.delete_change_set(
                 change_set_name: @stacks[name].name,
                 stack_name: @stacks[name].name,
               )
-              puts(('deleted ' + @stacks[name].name).color(:red))
+              logger.info(('deleted ' + @stacks[name].name).color(:red))
             end
           end
         end
@@ -180,20 +182,20 @@ module CFnDK
                 item.stack_status_reason]
             end
           rescue Aws::CloudFormation::Errors::ValidationError => ex
-            puts ex.message
+            @logger.warn ex.message
           end
           rows
         end
       end
       table = Terminal::Table.new headings: %w(Name Creation Deletion Status Reason), rows: rows
-      puts table
+      @logger.info table
     end
 
     def report_stack_resource
       @sequence.each do |stacks|
         stacks.each do |name|
-          puts(('stack ' + name).color(:green))
-          puts('Name        :' + @stacks[name].name) if @option[:v]
+          @logger.info(('stack ' + name).color(:green))
+          @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
           begin
             rows = @cfn_client.describe_stack_resources(
               stack_name: @stacks[name].name
@@ -222,9 +224,9 @@ module CFnDK
               ]
             end
             table = Terminal::Table.new headings: %w(L-name P-name Type Timestamp Status Reason Desc), rows: rows
-            puts table
+            @logger.info table
           rescue Aws::CloudFormation::Errors::ValidationError => ex
-            puts ex.message
+            @logger.warn  ex.message
           end
         end
       end
@@ -233,8 +235,8 @@ module CFnDK
     def report_event
       @sequence.each do |stacks|
         stacks.each do |name|
-          puts(('stack ' + name).color(:green))
-          puts('Name        :' + @stacks[name].name) if @option[:v]
+          @logger.info(('stack ' + name).color(:green))
+          @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
           begin
             rows = @cfn_client.describe_stack_events(
               stack_name: @stacks[name].name
@@ -259,9 +261,9 @@ module CFnDK
                 item.resource_status_reason]
             end
             table = Terminal::Table.new headings: %w(Type Time Status Reason), rows: rows
-            puts table
+            @logger.info table
           rescue Aws::CloudFormation::Errors::ValidationError => ex
-            puts ex.message
+            @logger.warn ex.message
           end
         end
       end
@@ -271,8 +273,8 @@ module CFnDK
       @sequence.reverse_each do |stacks|
         stacks.each do |name|
           next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
-          puts(('deleting ' + name).color(:green))
-          puts('Name        :' + @stacks[name].name) if @option[:v]
+          @logger.info(('deleting ' + name).color(:green))
+          @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
           @cfn_client.delete_stack(
             stack_name: @stacks[name].name
           )
@@ -283,7 +285,7 @@ module CFnDK
             :stack_delete_complete,
             stack_name: @stacks[name].name
           )
-          puts(('deleted ' + name).color(:green))
+          @logger.info(('deleted ' + name).color(:green))
         end
       end
     end
@@ -292,8 +294,8 @@ module CFnDK
       @sequence.each do |stacks|
         stacks.each do |name|
           next if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(name)
-          puts(('validate ' + name).color(:green))
-          puts('Name        :' + @stacks[name].name) if @option[:v]
+          @logger.info(('validate ' + name).color(:green))
+          @logger.debug('Name        :' + @stacks[name].name) if @option[:v]
           @cfn_client.validate_template(
             template_body: @stacks[name].template_body
           )
