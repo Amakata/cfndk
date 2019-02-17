@@ -1,3 +1,7 @@
+
+keypairs:
+  Key1:
+    key_file: key/key1<%= append_uuid %>.pem
 stacks:
   Stack1:
     template_file: stack1/stack1.yaml 

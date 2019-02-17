@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Security Groups Stack
+Parameters:
+  VpcName:
+    Description: Name for this VPC
+    Type: String
+Resources:
+  WebInstanceSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${VpcName}-Web-Instance-Sg
+      GroupDescription: EC2 Web Instance Acccess Security Group
+      VpcId:
+        Fn::ImportValue: !Sub ${VpcName}-VpcId
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+        Description: Allow SSH Access From Internet
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+        Description: Allow HTTP Access From Internet
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-Web-Instance-Sg
+  DbSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${VpcName}-Db-Sg
+      GroupDescription: RDS Db Acccess Security Group
+      VpcId:
+        Fn::ImportValue: !Sub ${VpcName}-VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref WebInstanceSg
+Outputs:
+  WebInstanceSg:
+    Description: WebInstance Security Group ID
+    Value: !Ref WebInstanceSg
+    Export:
+      Name: !Sub ${VpcName}-WebInstanceSg
+  DbSg:
+    Description: Db Security Group ID
+    Value: !Ref DbSg
+    Export:
+      Name: !Sub ${VpcName}-DbSg

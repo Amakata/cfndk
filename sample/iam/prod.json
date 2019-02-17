@@ -1,0 +1,12 @@
+{
+  "Parameters": [
+      {
+          "ParameterKey": "WebRoleName",
+          "ParameterValue": "WebRole"
+      },
+      {
+          "ParameterKey": "WebInstanceProfileName",
+          "ParameterValue": "WebInstanceProfile"            
+      }
+  ]
+}

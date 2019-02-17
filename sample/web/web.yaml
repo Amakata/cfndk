@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Bastion Stack
+Parameters:
+  VpcName:
+    Type: String
+  AutoRecoveryMinutes:
+    Type: Number
+  InternalDnsName:
+    Type: String
+  WebInstanceProfileName:
+    Type: String
+  Environment:
+    Type: String
+  AmiId1:
+    Type: AWS::EC2::Image::Id
+  AmiId2:
+    Type: AWS::EC2::Image::Id
+  HostName1:
+    Type: String
+  HostName2:
+    Type: String
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+  InstanceType:
+    Type: String
+Resources:
+  Web1Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId1
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPair
+      SourceDestCheck: false
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            DeleteOnTermination: true
+            VolumeSize: 20
+            VolumeType: gp2
+      SubnetId:
+        Fn::ImportValue: !Sub ${VpcName}-${Environment}-Web-Subnet1
+      SecurityGroupIds:
+      - Fn::ImportValue: !Sub ${VpcName}-WebInstanceSg
+      IamInstanceProfile: !Ref WebInstanceProfileName
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Web1
+  Web2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId2
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPair
+      SourceDestCheck: false
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            DeleteOnTermination: true
+            VolumeSize: 20
+            VolumeType: gp2
+      SubnetId:
+        Fn::ImportValue: !Sub ${VpcName}-${Environment}-Web-Subnet2
+      SecurityGroupIds:
+      - Fn::ImportValue: !Sub ${VpcName}-WebInstanceSg
+      IamInstanceProfile: !Ref WebInstanceProfileName
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Web2
+  Web1RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub ${VpcName}-InternalDns
+      Comment: DNS name for Web1
+      Name:
+        !Join
+          - '.'
+          - - !Ref HostName1
+            - Fn::ImportValue: !Sub ${VpcName}-InternalDnsName
+      Type: A
+      TTL: 60
+      ResourceRecords:
+      - !GetAtt Web1Instance.PrivateIp
+  Web2RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub ${VpcName}-InternalDns
+      Comment: DNS name for Web2
+      Name:
+        !Join
+          - '.'
+          - - !Ref HostName2
+            - Fn::ImportValue: !Sub ${VpcName}-InternalDnsName
+      Type: A
+      TTL: 60
+      ResourceRecords:
+      - !GetAtt Web2Instance.PrivateIp      
+  Web1RecoveryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Trigger a Auto recovery when instance status check fails for 5 consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: !Ref AutoRecoveryMinutes
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '0'
+      AlarmActions:
+      - !Sub "arn:aws:automate:${AWS::Region}:ec2:recover"
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref Web1Instance
+    DependsOn: Web1Instance
+  Web2RecoveryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Trigger a Auto recovery when instance status check fails for 5 consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: !Ref AutoRecoveryMinutes
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '0'
+      AlarmActions:
+      - !Sub "arn:aws:automate:${AWS::Region}:ec2:recover"
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref Web2Instance
+    DependsOn: Web2Instance   

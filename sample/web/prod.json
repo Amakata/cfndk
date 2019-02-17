@@ -1,0 +1,48 @@
+{
+  "Parameters": [
+      {
+          "ParameterKey": "VpcName",
+          "ParameterValue": "sample"
+      },
+      {
+          "ParameterKey": "InternalDnsName",
+          "ParameterValue": "sample.local"
+      },
+      {
+        "ParameterKey": "AutoRecoveryMinutes",
+        "ParameterValue": "60"
+      },
+      {
+        "ParameterKey": "WebInstanceProfileName",
+        "ParameterValue": "WebInstanceProfile"
+      },
+      {
+        "ParameterKey": "AmiId1",
+        "ParameterValue": "ami-0a2de1c3b415889d2"
+      },
+      {
+        "ParameterKey": "AmiId2",
+        "ParameterValue": "ami-0a2de1c3b415889d2"
+      },
+      {
+        "ParameterKey": "HostName1",
+        "ParameterValue": "web1"
+      },
+      {
+        "ParameterKey": "HostName2",
+        "ParameterValue": "web2"
+      },
+      {
+        "ParameterKey": "KeyPair",
+        "ParameterValue": "CFnDKSampleKey"
+      },
+      {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "t3.nano"
+      },
+      {
+          "ParameterKey": "Environment",
+          "ParameterValue": "Prod"
+      }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "Parameters": [
+      {
+          "ParameterKey": "VpcName",
+          "ParameterValue": "sample"
+      },
+      {
+          "ParameterKey": "Environment",
+          "ParameterValue": "Prod"
+      },
+      {
+          "ParameterKey": "MySQLMajorVersion",
+          "ParameterValue": "5.7"
+      },
+      {
+          "ParameterKey": "DBInstanceClass",
+          "ParameterValue": "db.t2.micro"
+      },
+      {
+          "ParameterKey": "DBInstanceStorageSize",
+          "ParameterValue": "10"
+      },
+      {
+          "ParameterKey": "DBInstanceStorageType",
+          "ParameterValue": "gp2"
+      },
+      {
+          "ParameterKey": "DBName",
+          "ParameterValue": "db"
+      },
+      {
+          "ParameterKey": "DBRestore",
+          "ParameterValue": "false"
+      },
+      {
+          "ParameterKey": "DBSnapshotId",
+          "ParameterValue": ""
+      },
+      {
+          "ParameterKey": "DBMasterUserName",
+          "ParameterValue": "dbuser"
+      },
+      {
+          "ParameterKey": "DBPassword",
+          "ParameterValue": "dbpassword"
+      },
+      {
+          "ParameterKey": "MultiAZ",
+          "ParameterValue": "false"
+      },
+      {
+          "ParameterKey": "CopyTagsToSnapshot",
+          "ParameterValue": "false"
+      },
+      {
+          "ParameterKey": "OptionalPreferredBackupWindow",
+          "ParameterValue": ""
+      },
+      {
+          "ParameterKey": "OptionalPreferredMaintenanceWindow",
+          "ParameterValue": ""
+      },
+      {
+          "ParameterKey": "OptionalBackupRetentionPeriod",
+          "ParameterValue": ""
+      }
+  ]
+}

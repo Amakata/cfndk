@@ -1,0 +1,136 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DB Stack
+Parameters:
+# ------------------------------------------------------------#
+# Input Parameters
+# ------------------------------------------------------------# 
+  VpcName:
+    Type: String
+  Environment:
+    Type: String
+  MySQLMajorVersion:
+    Type: String
+    Default: "5.7"
+    AllowedValues: [ "5.5", "5.6", "5.7" ]
+  DBInstanceClass:
+    Type: String
+    Default: "db.m4.large" 
+  DBInstanceStorageSize:
+    Type: String
+    Default: "30"
+  DBInstanceStorageType:
+    Type: String
+    Default: "gp2"
+  DBName:
+    Type: String
+    Default: "db"
+  DBRestore: 
+    Default: "false"
+    Type: String
+    AllowedValues: [ "true", "false" ]
+  DBSnapshotId:
+    Type: String
+  DBMasterUserName:
+    Type: String
+    Default: "dbuser"
+    NoEcho: true
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: "must begin with a letter and contain only alphanumeric characters."
+  DBPassword: 
+    Default: "dbpassword"
+    NoEcho: true
+    Type: String
+    MinLength: 8
+    MaxLength: 41
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: "must contain only alphanumeric characters."
+  MultiAZ: 
+    Default: "false"
+    Type: String
+    AllowedValues: [ "true", "false" ]
+  CopyTagsToSnapshot: 
+    Default: "false"
+    Type: String
+    AllowedValues: [ "true", "false" ]
+  OptionalPreferredBackupWindow:
+    Type: String
+    ConstraintDescription: "Must be like 18:00-18:30"
+  OptionalPreferredMaintenanceWindow:
+    Type: String
+    ConstraintDescription: "Must be like sat:19:00-sat:19:30"
+  OptionalBackupRetentionPeriod:
+    Type: String
+    ConstraintDescription: "Must be like 7"
+Conditions:
+  IsOptionalDBRestore:
+    !Equals [!Ref DBRestore, 'true']
+  IsOptionalPreferredBackupWindow:
+    !Not [!Equals [!Ref OptionalPreferredBackupWindow, '']]
+  IsOptionalPreferredMaintenanceWindow:
+    !Not [!Equals [!Ref OptionalPreferredMaintenanceWindow, '']]
+  IsOptionalBackupRetentionPeriod:
+    !Not [!Equals [!Ref OptionalBackupRetentionPeriod, '']]
+Resources:
+  DBInstance: 
+    Type: AWS::RDS::DBInstance
+    Properties: 
+      DBInstanceIdentifier: !Sub "${VpcName}-${Environment}-Db"
+      Engine: MySQL
+      EngineVersion: !Sub "${MySQLMajorVersion}.22"
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref DBInstanceStorageSize
+      StorageType: !Ref DBInstanceStorageType
+      DBName: !Ref DBName
+      DBSnapshotIdentifier:
+        !If [IsOptionalDBRestore, !Ref DBSnapshotId, !Ref "AWS::NoValue"]
+      MasterUsername:
+        !If [IsOptionalDBRestore, "!Ref AWS::NoValue", !Ref DBMasterUserName]
+      MasterUserPassword:
+        !If [IsOptionalDBRestore, "!Ref AWS::NoValue", !Ref DBPassword]
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: false
+      MultiAZ: !Ref MultiAZ
+      PreferredBackupWindow:
+        !If [IsOptionalPreferredBackupWindow, !Ref OptionalPreferredBackupWindow, !Ref "AWS::NoValue"]
+      PreferredMaintenanceWindow:
+        !If [IsOptionalPreferredMaintenanceWindow, !Ref OptionalPreferredMaintenanceWindow, !Ref "AWS::NoValue"]
+      AutoMinorVersionUpgrade: false
+      DBParameterGroupName: !Ref DBParameterGroup  
+      VPCSecurityGroups:
+        - { "Fn::ImportValue": !Sub "${VpcName}-DbSg" }
+      CopyTagsToSnapshot: !Ref CopyTagsToSnapshot
+      BackupRetentionPeriod:
+        !If [IsOptionalBackupRetentionPeriod, !Ref OptionalBackupRetentionPeriod, !Ref "AWS::NoValue"]
+      Port: 3306
+      Tags: 
+        - Key: Name
+          Value: !Sub "${VpcName}-${Environment}-Db"
+    DeletionPolicy: Delete
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: !Sub "MySQL${MySQLMajorVersion}"
+      Description: !Sub "${VpcName}-${Environment}-Db-parm"
+  DBSubnetGroup: 
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties: 
+      DBSubnetGroupName: !Sub "${VpcName}-${Environment}-Db-subnet"
+      DBSubnetGroupDescription: "Db subnet group"
+      SubnetIds: 
+        - { "Fn::ImportValue": !Sub "${VpcName}-${Environment}-Private-Subnet1" }
+        - { "Fn::ImportValue": !Sub "${VpcName}-${Environment}-Private-Subnet2" }
+Outputs:
+  DBInstanceID:
+    Value: !Ref DBInstance
+    Export:
+      Name: !Sub "${VpcName}-${Environment}-Db-id"
+  DBInstanceEndpoint:
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Export:
+      Name: !Sub "${VpcName}-${Environment}-Db-endpoint"
+  DBName:
+    Value: !Ref DBName
+    Export:
+      Name: !Sub "${VpcName}-${Environment}-Db-dbname"

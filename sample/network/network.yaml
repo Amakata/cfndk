@@ -1,0 +1,333 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Network Stack
+Parameters:
+  VpcName:
+    Description: Name for this VPC
+    Type: String
+  VpcCidr:
+    Description: CIDR Block for the VPC
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+    ConstraintDescription: Must be like 192.168.0.0/24
+  InternalDnsName:
+    Description: Internal DNS name
+    Type: String
+  Environment:
+    Description: Name for this Environment
+    Type: String
+  PublicSubnet1Cidr:
+    Description: CIDR Block for the subnet
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+    ConstraintDescription: Must be like 192.168.0.0/24
+  PublicSubnet2Cidr:
+    Description: CIDR Block for the subnet
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+    ConstraintDescription: Must be like 192.168.0.0/24
+  WebSubnet1Cidr:
+    Description: CIDR Block for the subnet
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+    ConstraintDescription: Must be like 192.168.0.0/24
+  WebSubnet2Cidr:
+    Description: CIDR Block for the subnet
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+    ConstraintDescription: Must be like 192.168.0.0/24
+  PrivateSubnet1Cidr:
+    Description: CIDR Block for the subnet
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+    ConstraintDescription: Must be like 192.168.0.0/24
+  PrivateSubnet2Cidr:
+    Description: CIDR Block for the subnet
+    Type: String
+    AllowedPattern: '[a-zA-Z0-9]+\..+'
+    ConstraintDescription: Must be like 192.168.0.0/24    
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-VPC
+  Igw:
+    Type: AWS::EC2::InternetGateway
+    Properties: 
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-IGW
+  IgwAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref Igw
+      VpcId: !Ref Vpc
+  InternalDns:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      HostedZoneConfig:
+        Comment: Internal DNS
+      Name: !Ref InternalDnsName
+      VPCs:
+        - VPCId: !Ref Vpc
+          VPCRegion: !Ref AWS::Region
+      HostedZoneTags:
+        - Key: Name
+          Value: InternalDns
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PublicSubnet1Cidr
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref 'AWS::Region'
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Public-Subnet1
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PublicSubnet2Cidr
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select
+      - 1
+      - Fn::GetAZs: !Ref 'AWS::Region'
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Public-Subnet2
+  WebSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref WebSubnet1Cidr
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref 'AWS::Region'
+      MapPublicIpOnLaunch: false
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Web-Subnet1
+  WebSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref WebSubnet2Cidr
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select
+      - 1
+      - Fn::GetAZs: !Ref 'AWS::Region'
+      MapPublicIpOnLaunch: false
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Web-Subnet2
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PrivateSubnet1Cidr
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Private-Subnet1
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PrivateSubnet2Cidr
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select
+      - 1
+      - Fn::GetAZs: !Ref 'AWS::Region'
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Private-Subnet2
+  PublicSubnetRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Public-SubnetRT
+  PublicSubnetToInternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicSubnetRT
+      GatewayId: !Ref Igw
+      DestinationCidrBlock: 0.0.0.0/0
+  PublicSubnetRTAssociationToPublicSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicSubnetRT
+      SubnetId: !Ref PublicSubnet1
+  PublicSubnetRTAssociationToPublicSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicSubnetRT
+      SubnetId: !Ref PublicSubnet2
+  WebSubnetRT1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Web-SubnetRT1
+  WebSubnetRT2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Web-SubnetRT2
+  WebSubnetRTAssociationToPublicSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref WebSubnetRT1
+      SubnetId: !Ref WebSubnet1
+  WebSubnetRTAssociationToPublicSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref WebSubnetRT2
+      SubnetId: !Ref WebSubnet2
+  PrivateSubnetRT1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Private-SubnetRT1
+  PrivateSubnetRT2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Private-SubnetRT2
+  PrivateSubnetRT1AssociationToPrivateSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRT1
+      SubnetId: !Ref PrivateSubnet1
+  PrivateSubnetRT2AssociationToPrivateSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRT2
+      SubnetId: !Ref PrivateSubnet2
+  NatEip1:
+    Type: AWS::EC2::EIP
+    Properties: {}
+  NatEip2:
+    Type: AWS::EC2::EIP
+    Properties: {}
+  NatGw1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      AllocationId:
+        Fn::GetAtt:
+        - NatEip1
+        - AllocationId
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-NATGW1
+  NatGw2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      AllocationId:
+        Fn::GetAtt:
+        - NatEip2
+        - AllocationId
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-NATGW2
+  PrivateSubnet1ToInternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRT1
+      NatGatewayId: !Ref NatGw1
+      DestinationCidrBlock: 0.0.0.0/0
+  PrivateSubnet2ToInternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateSubnetRT2
+      NatGatewayId: !Ref NatGw2
+      DestinationCidrBlock: 0.0.0.0/0
+  WebSubnet1ToInternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref WebSubnetRT1
+      NatGatewayId: !Ref NatGw1
+      DestinationCidrBlock: 0.0.0.0/0
+  WebSubnet2ToInternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref WebSubnetRT2
+      NatGatewayId: !Ref NatGw2
+      DestinationCidrBlock: 0.0.0.0/0          
+Outputs:
+  VpcCidr:
+    Description: VPC CIDR
+    Value: !GetAtt Vpc.CidrBlock
+    Export:
+      Name: !Sub ${VpcName}-VpcCidr
+  VpcId:
+    Description: VPC ID
+    Value: !Ref Vpc
+    Export:
+      Name: !Sub ${VpcName}-VpcId
+  Igw:
+    Description: InternetGateway of this VPC
+    Value: !Ref Igw
+    Export:
+      Name: !Sub ${VpcName}-IGW
+  IgwAttachement:
+    Description: InternetGatewayAttachement of this VPC
+    Value: !Ref IgwAttachement
+    Export:
+      Name: !Sub ${VpcName}-IGW-Attachement
+  InternalDnsName:
+    Description: Internal DNS zone name
+    Value: !Join [ ".", [ !Ref InternalDnsName, "" ]]
+    Export:
+      Name: !Sub ${VpcName}-InternalDnsName
+  InternalDns:
+    Description: Internal DNS zone id
+    Value: !Ref InternalDns
+    Export:
+      Name: !Sub ${VpcName}-InternalDns
+  PrivateSubnet1:
+    Description: Private Subnet 1 Id
+    Value: !Ref PrivateSubnet1
+    Export:
+     Name: !Sub ${VpcName}-${Environment}-Private-Subnet1
+  PrivateSubnet2:
+    Description: Private Subnet 2 Id
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub ${VpcName}-${Environment}-Private-Subnet2
+  WebSubnet1:
+    Description: Web Subnet 1 Id
+    Value: !Ref WebSubnet1
+    Export:
+      Name: !Sub ${VpcName}-${Environment}-Web-Subnet1
+  WebSubnet2:
+    Description: Web Subnet 2 Id
+    Value: !Ref WebSubnet2
+    Export:
+      Name: !Sub ${VpcName}-${Environment}-Web-Subnet2
+  PublicSubnet1:
+    Description: Public Subnet 1 Id
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub ${VpcName}-${Environment}-Public-Subnet1
+  PublicSubnet2:
+    Description: Public Subnet 2 Id
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: !Sub ${VpcName}-${Environment}-Public-Subnet2

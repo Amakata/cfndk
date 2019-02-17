@@ -1,0 +1,44 @@
+{
+    "Parameters": [
+        {
+            "ParameterKey": "VpcName",
+            "ParameterValue": "sample"
+        },
+        {
+            "ParameterKey": "VpcCidr",
+            "ParameterValue": "10.199.0.0/16"
+        },
+        {
+            "ParameterKey": "InternalDnsName",
+            "ParameterValue": "sample.local"
+        },
+        {
+            "ParameterKey": "Environment",
+            "ParameterValue": "Prod"
+        },
+        {
+            "ParameterKey": "PublicSubnet1Cidr",
+            "ParameterValue": "10.199.1.0/25"
+        },
+        {
+            "ParameterKey": "PublicSubnet2Cidr",
+            "ParameterValue": "10.199.1.128/25"
+        },
+        {
+            "ParameterKey": "WebSubnet1Cidr",
+            "ParameterValue": "10.199.2.0/25"
+        },
+        {
+            "ParameterKey": "WebSubnet2Cidr",
+            "ParameterValue": "10.199.2.128/25"
+        },
+        {
+            "ParameterKey": "PrivateSubnet1Cidr",
+            "ParameterValue": "10.199.3.0/25"
+        },
+        {
+            "ParameterKey": "PrivateSubnet2Cidr",
+            "ParameterValue": "10.199.3.128/25"
+        }
+    ]
+}
