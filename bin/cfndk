@@ -87,11 +87,12 @@ end
 
 data = open(option[:config_path], 'r') { |f| YAML.load(f) } if File.file?(option[:config_path])
 credentials = CFnDK::CredentialProviderChain.new.resolve
-client = Aws::CloudFormation::Client.new(credentials: credentials)
-stacks = CFnDK::Stacks.new(data, option, client)
+stacks = CFnDK::Stacks.new(data, option, credentials)
+keypairs = CFnDK::KeyPairs.new(data, option, credentials)
 
 if ARGV[0] == 'create'
   puts 'create...'.color :green
+  keypairs.create
   stacks.create
 elsif ARGV[0] == 'update'
   puts 'update...'.color :green
@@ -102,6 +103,7 @@ elsif ARGV[0] == 'create-or-changeset'
 elsif ARGV[0] == 'destroy'
   puts 'destroy...'.color :green
   stacks.destroy
+  keypairs.destroy
 elsif ARGV[0] == 'validate'
   puts 'validate...'.color :green
   stacks.validate

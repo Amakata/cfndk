@@ -1,8 +1,8 @@
 module CFnDK
   class Stacks
-    def initialize(data, option, cfn_client)
+    def initialize(data, option, credentials)
       @option = option
-      @cfn_client = cfn_client
+      @cfn_client = Aws::CloudFormation::Client.new(credentials: credentials)
       create_stack data
       create_sequence
     end
