@@ -8,7 +8,6 @@ module CFnDK
     end
 
     def create
-      validate
       @sequence.each do |stacks|
         stacks.each do |name|
           puts(('creating ' + name).color(:green))
@@ -41,7 +40,6 @@ module CFnDK
     end
 
     def update
-      validate
       @sequence.each do |stacks|
         updating_stacks = []
         stacks.each do |name|
@@ -73,7 +71,6 @@ module CFnDK
     end
 
     def create_or_changeset
-      validate
       @sequence.each do |stacks|
         create_stacks = []
         changeset_stacks = []

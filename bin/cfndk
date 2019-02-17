@@ -92,13 +92,16 @@ keypairs = CFnDK::KeyPairs.new(data, option, credentials)
 
 if ARGV[0] == 'create'
   puts 'create...'.color :green
+  stacks.validate
   keypairs.create
   stacks.create
 elsif ARGV[0] == 'update'
   puts 'update...'.color :green
+  stacks.validate
   stacks.update
 elsif ARGV[0] == 'create-or-changeset'
   puts 'create or changeset...'.color :green
+  stacks.validate
   stacks.create_or_changeset
 elsif ARGV[0] == 'destroy'
   puts 'destroy...'.color :green
