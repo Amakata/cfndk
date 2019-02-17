@@ -4,6 +4,11 @@ This is easy operation/integration support tool for AWS CloudFormation.
 
 このツールは、AWS CloudFromationのための簡単な運用/構築サポートツールです。
 
+kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプレートを書かずにDSLで表現するツールには様々な物があります。
+しかし、これらのツールはサードパーティツールであるため、CloudFormationの対応への追従に不安がのこります。
+本ツールは、標準のCloudFromationテンプレートの枠組みを変えずに、その利用を支援するツールとなっています。
+最悪このツールが使えなくなっても僅かなコストで標準のAWS CLIを使ってオペレーションを続行することが可能です。
+
 ## ハイライト
 
 * 複数のスタックをワンコマンドで作成/更新/削除
