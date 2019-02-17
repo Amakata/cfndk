@@ -9,6 +9,7 @@ This is easy operation/integration support tool for AWS CloudFormation.
 * 複数のスタックをワンコマンドで作成/更新/削除
 * 複数のスタックの依存関係を考慮した操作
 * CloudFormationでバージョンコントロールシステムと連動した継続的インテグレーションのための基盤対応
+* Keypairの作成/削除
 
 ## インストール
 
@@ -169,6 +170,10 @@ UUIDが指定されるとスタック名に付加されます。
 * example
 
 ```
+keypairs:
+  Key1:
+  Key2:
+    key_file: key/key2<%= append_uuid %>.pem
 stacks:
   Stack1:
     template_file: stack1/stack1.yaml 
@@ -189,6 +194,9 @@ stacks:
 ```
 
 ```
+keypairs:
+  [String]:
+    key_file: [String]
 stacks:
   [String]:
     template_file: [String]
@@ -204,6 +212,30 @@ stacks:
       - [String]
       - [String]      
 ```
+
+### ```keypairs:```
+
+```
+keypairs:
+  [keypair Original Name]:
+```
+
+cfndkで管理するキーペアを定義します。
+キーペアの配下には、管理するキーペアのオリジナル名を定義します。
+通常は、キーペアを作成するとこの名称が利用されます。
+UUIDを利用すると、```[Keypair Original Name]-[UUID]```のような形式のキーペア名が利用されます。
+
+#### key_file
+
+キーペア作成時にキーペアのファイルを指定された相対パスに作成します。
+同名のファイルがある場合は上書きするので注意が必要です。
+
+erbの記法が利用できます。
+
+```
+    key_file: key/key<%= append_uuid %>.pem
+```
+
 
 ### ```stacks:```
 
@@ -223,7 +255,7 @@ UUIDを利用すると、```[Stack Original Name]-[UUID]```のような形式の
 
 #### parameter_input
 
-必須。CloudFormationのパラメータJSONをcfndk.yamlからの相対パスで指定します。
+必須。CloudFormationのパラメータJSONファイルをcfndk.yamlからの相対パスで指定します。
 
 #### parameters
 
@@ -242,23 +274,6 @@ Parameter Valueではerbの記法が利用できます。
     parameters:
       VpcName: Prod<%= append_uuid %>
 ```
-
-##### parametrsのerbで使用できるメソッド
-
-  * ```append_uuid(glue='-')```
-
-    UUIDガ指定されている場合、```[glueの文字列] + [UUID]```を返します。
-    UUIDが指定されてい無い場合は空文字が返ります。
-    glueで接続文字を置き換えることができます。
-
-  * ```uuid```
-
-    UUIDを返します。
-    UUIDが指定されてい無い場合は空文字が返ります。
-
-  * ```properties(key)```
-
-    オプション```--properties```で指定したキーに対応する値を参照することができます。
 
 #### capabilities
 
@@ -298,3 +313,21 @@ dependsが循環するような指定をすることはできません。
 ```
     timeout_in_minutes: 5
 ```
+
+
+### erbで使用できるメソッド
+
+  * ```append_uuid(glue='-')```
+
+    UUIDガ指定されている場合、```[glueの文字列] + [UUID]```を返します。
+    UUIDが指定されてい無い場合は空文字が返ります。
+    glueで接続文字を置き換えることができます。
+
+  * ```uuid```
+
+    UUIDを返します。
+    UUIDが指定されてい無い場合は空文字が返ります。
+
+  * ```properties(key)```
+
+    オプション```--properties```で指定したキーに対応する値を参照することができます。
