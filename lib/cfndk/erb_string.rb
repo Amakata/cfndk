@@ -1,5 +1,5 @@
 module CFnDK
-  class ParameterString
+  class ErbString
     attr_reader :uuid, :properties
     def initialize(str, option)
       @erb = ERB.new(str, nil, '-')

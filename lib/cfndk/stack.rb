@@ -35,7 +35,7 @@ module CFnDK
 
     def eval_override_parameter(k, v)
       if @override_parameters[k]
-        CFnDK::ParameterString.new(@override_parameters[k], @option).value
+        CFnDK::ErbString.new(@override_parameters[k], @option).value
       else
         v
       end
