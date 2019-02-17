@@ -1,0 +1,20 @@
+{
+  "Parameters": [
+      {
+          "ParameterKey": "VpcName",
+          "ParameterValue": "sample"
+      },
+      {
+          "ParameterKey": "Environment",
+          "ParameterValue": "Prod"
+      },
+      {
+          "ParameterKey": "WebElbHostName",
+          "ParameterValue": "elb"
+      },
+      {
+        "ParameterKey": "InternalDnsName",
+        "ParameterValue": "sample.local"
+      }
+  ]
+}

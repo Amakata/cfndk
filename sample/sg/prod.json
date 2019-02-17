@@ -3,6 +3,10 @@
       {
           "ParameterKey": "VpcName",
           "ParameterValue": "sample"
-      }
+      },
+      {
+        "ParameterKey": "Environment",
+        "ParameterValue": "Prod"
+      }      
   ]
 }

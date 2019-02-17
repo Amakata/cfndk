@@ -1,8 +1,77 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: ELB Stack
-
 Parameters:
-
+  VpcName:
+    Description: Name for this VPC
+    Type: String
+  InternalDnsName:
+    Description: Internal DNS name
+    Type: String
+  Environment:
+    Description: Name for this Environment
+    Type: String
+  WebElbHostName:
+    Description: Local DNS Name for ELB
+    Type: String
 Resources:
-  
-Outputs:
+  WebLoadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      Subnets:
+      - Fn::ImportValue: !Sub ${VpcName}-${Environment}-Public-Subnet1
+      - Fn::ImportValue: !Sub ${VpcName}-${Environment}-Public-Subnet2
+      SecurityGroups:
+      - Fn::ImportValue: !Sub ${VpcName}-${Environment}-Web-ElbSg
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-${Environment}-Web-Elb
+  WebLoadBalancerRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub ${VpcName}-InternalDns
+      Comment: DNS name for ELB
+      Name:
+        !Join
+          - '.'
+          - - !Ref WebElbHostName
+            - Fn::ImportValue: !Sub ${VpcName}-InternalDnsName
+      Type: CNAME
+      TTL: '60'
+      ResourceRecords:
+      - !GetAtt WebLoadBalancer.DNSName        
+  WebTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: "80"
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId:
+        Fn::ImportValue: !Sub ${VpcName}-VpcId
+      Targets:
+      - Id: 
+          Fn::ImportValue: !Sub ${VpcName}-${Environment}-Web1
+        Port: 80
+      - Id: 
+          Fn::ImportValue: !Sub ${VpcName}-${Environment}-Web2
+        Port: 80
+      Tags:
+      - Key: Name
+        Value: !Sub ${VpcName}-Web-Tg  
+  WebListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref WebTargetGroup
+      LoadBalancerArn: !Ref WebLoadBalancer
+      Port: 80
+      Protocol: HTTP

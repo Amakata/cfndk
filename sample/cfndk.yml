@@ -41,6 +41,16 @@ stacks:
       - CFnDKSampleSg
       - CFnDKSampleIam
     timeout_in_minutes: 2
+  CFnDKSampleElb:
+    template_file: elb/elb.yaml
+    parameter_input: elb/prod.json
+    parameters:
+      VpcName: Sample<%= append_uuid %>
+      InternalDnsName: sample<%= append_uuid %>.local
+    depends:
+      - CFnDKSampleWeb
+      - CFnDKSampleSg
+    timeout_in_minutes: 5
   CFnDKSampleDb:
     template_file: db/db.yaml
     parameter_input: db/prod.json

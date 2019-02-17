@@ -129,4 +129,15 @@ Resources:
       Dimensions:
       - Name: InstanceId
         Value: !Ref Web2Instance
-    DependsOn: Web2Instance   
+    DependsOn: Web2Instance
+Outputs:
+  Web1Instance:
+    Description: EC2 ID
+    Value: !Ref Web1Instance
+    Export:
+      Name: !Sub ${VpcName}-${Environment}-Web1
+  Web2Instance:
+    Description: EC2 ID
+    Value: !Ref Web2Instance
+    Export:
+      Name: !Sub ${VpcName}-${Environment}-Web2
