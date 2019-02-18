@@ -34,12 +34,11 @@ module CFnDK
 
     private
 
-    def create_key_file key_pair
+    def create_key_file(key_pair)
       return unless @key_file
       key_file = CFnDK::ErbString.new(@key_file, @option).value
       @logger.info(('create key file: ' + key_file).color(:green))
       File.write(key_file, key_pair.key_material)
     end
-
   end
 end

@@ -7,6 +7,5 @@ require 'cfndk/erb_string'
 require 'cfndk/logger'
 require 'cfndk/credential_provider_chain'
 
-
 module CFnDK
 end

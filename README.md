@@ -163,7 +163,7 @@ UUIDが指定されるとスタック名に付加されます。
 
 #### ```-s, --stack-names name1,name2```
 
-create,update,destroy,create_or_changesetのコマンドで、指定されたスタック名のみを操作します。
+指定されたスタック名のみを操作します。
 
 #### ```--no-color```
 
