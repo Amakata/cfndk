@@ -167,7 +167,7 @@ module CFnDK
             item.stack_name,
             item.creation_time,
             item.deletion_time,
-            coloerd_status(item.stack_status),
+            colored_status(item.stack_status),
             item.stack_status_reason]
         end
         table = Terminal::Table.new headings: %w(Name Creation Deletion Status Reason), rows: rows
@@ -188,7 +188,7 @@ module CFnDK
           [
             item.resource_type,
             item.timestamp,
-            coloerd_status(item.resource_status),
+            colored_status(item.resource_status),
             item.resource_status_reason]
         end
         table = Terminal::Table.new headings: %w(Type Time Status Reason), rows: rows
@@ -211,7 +211,7 @@ module CFnDK
             item.physical_resource_id,
             item.resource_type,
             item.timestamp,
-            coloerd_status(item.resource_status),
+            colored_status(item.resource_status),
             item.resource_status_reason,
             item.description,
           ]
@@ -244,20 +244,20 @@ module CFnDK
 
     private
 
-    def coloerd_status(str)
+    def colored_status(str)
       case str
       when 'CREATE_FAILED' then
-        item.resource_status.color :red
+        str.color :red
       when 'ROLLBACK_IN_PROGRESS' then
-        item.resource_status.color :red
+        str.color :red
       when 'ROLLBACK_COMPLETE' then
-        item.resource_status.color :red
+        str.color :red
       when 'CREATE_COMPLETE' then
-        item.resource_status.color :green
+        str.color :green
       when 'DELETE_COMPLETE' then
-        item.resource_status.color :gray
+        str.color :gray
       else
-        item.resource_status.color :orange
+        str.color :orange
       end
     end
 
