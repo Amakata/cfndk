@@ -56,7 +56,7 @@ module CFnDK
     def execute
       if ARGV.length != 1
         puts @opt.help
-        return 1
+        return 2
       elsif ARGV[0] == 'generate-uuid'
         puts SecureRandom.uuid
         return 0
@@ -114,7 +114,7 @@ module CFnDK
         stacks.report_stack_resource
       else
         puts @opt.help
-        return 1
+        return 2
       end
       0
     end
