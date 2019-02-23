@@ -16,14 +16,24 @@ module CFnDK
         o.banner = "Version: #{CFnDK::VERSION} \nUsage: cfndk [cmd] [options]"
         o.on_head('[cmd]',
                   '    init                  create config YAML file',
-                  '    create                create stacks',
-                  '    update                update stacks',
-                  '    create-or-changeset   create stacks or create changeset',
-                  '    destroy               destroy stacks',
                   '    generate-uuid         generate UUID',
-                  '    report-event          report stack event',
-                  '    report-stack          report stack',
-                  '    report-stack-resource report stack resource',
+                  '*** KEY PAIR & STACK COMMANDS ***',
+                  '    create',
+                  '    destroy',
+                  '    report',
+                  '*** STACK COMMANDS ***',
+                  '    stack create',
+                  '    stack update',
+                  '    stack destroy',
+                  '    stack validate',
+                  '    stack report',
+                  '*** CHANGESET COMMANDS ***',
+                  '    changeset create',
+                  '    changeset destroy',
+                  '    changeset report',
+                  '*** KEYPAIR COMMANDS ***',
+                  '    keypair create',
+                  '    keypair destroy',
                   '[enviroment variables]',
                   "    AWS_PROFILE: #{ENV['AWS_PROFILE']}",
                   "    AWS_DEFAULT_REGION: #{ENV['AWS_DEFAULT_REGION']}",
@@ -54,13 +64,18 @@ module CFnDK
     end
 
     def execute
-      if ARGV.length != 1
-        puts @opt.help
-        return 2
-      elsif ARGV[0] == 'generate-uuid'
+      code = execute_without_yaml
+      code = execute_with_yaml if code.nil?
+      return code if code
+      puts @opt.help
+      2
+    end
+
+    def execute_without_yaml
+      case ARGV[0]
+      when 'generate-uuid'
         puts SecureRandom.uuid
-        return 0
-      elsif ARGV[0] == 'init'
+      when 'init'
         if File.file?(@option[:config_path])
           @logger.error "File exist. #{@option[:config_path]}".color(:red)
           return 1
@@ -68,53 +83,101 @@ module CFnDK
         @logger.info 'init...'.color(:green)
         FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../../skel/*'), './')
         @logger.info "create #{@option[:config_path]}".color(:green)
-        return 0
+      else
+        return
       end
+      0
+    end
 
+    def execute_with_yaml
       unless File.file?(@option[:config_path])
         @logger.error "File does not exist. #{@option[:config_path]}".color(:red)
         return 1
       end
+      data = open(@option[:config_path], 'r') { |f| YAML.load(f) }
 
-      data = open(@option[:config_path], 'r') { |f| YAML.load(f) } if File.file?(@option[:config_path])
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, @option, credentials)
       keypairs = CFnDK::KeyPairs.new(data, @option, credentials)
 
-      if ARGV[0] == 'create'
+      case ARGV[0]
+      when 'create'
         @logger.info 'create...'.color(:green)
         stacks.validate
         keypairs.create
         stacks.create
-      elsif ARGV[0] == 'update'
-        @logger.info 'update...'.color(:green)
-        stacks.validate
-        stacks.update
-      elsif ARGV[0] == 'create-or-changeset'
-        @logger.info 'create or changeset...'.color(:green)
-        stacks.validate
-        stacks.create_or_changeset
-      elsif ARGV[0] == 'destroy'
+      when 'destroy'
         @logger.info 'destroy...'.color(:green)
         if destroy?
           stacks.destroy
           keypairs.destroy
         end
-      elsif ARGV[0] == 'validate'
+      when 'report'
+        @logger.info 'report...'.color(:green)
+        stacks.report
+      when 'stack'
+        execute_stack(stacks)
+      when 'changeset'
+        execute_changeset(stacks)
+      when 'keypair'
+        execute_keypair(keypairs)
+      else
+        return
+      end
+      0
+    end
+
+    def execute_stack(stacks)
+      case ARGV[1]
+      when 'craete'
+        @logger.info 'create...'.color(:green)
+        stacks.validate
+        stacks.create
+      when 'update'
+        @logger.info 'update...'.color(:green)
+        stacks.validate
+        stacks.update
+      when 'destroy'
+        @logger.info 'destroy...'.color(:green)
+        stacks.destroy if destroy?
+      when 'validate'
         @logger.info 'validate...'.color(:green)
         stacks.validate
-      elsif ARGV[0] == 'report-event'
-        @logger.info 'report event...'.color(:green)
-        stacks.report_event
-      elsif ARGV[0] == 'report-stack'
-        @logger.info 'report stack...'.color(:green)
-        stacks.report_stack
-      elsif ARGV[0] == 'report-stack-resource'
-        @logger.info 'report stack resource...'.color(:green)
-        stacks.report_stack_resource
+      when 'report'
+        @logger.info 'report...'.color(:green)
+        stacks.report
       else
-        puts @opt.help
-        return 2
+        return
+      end
+      0
+    end
+
+    def execute_changeset(stacks)
+      case ARGV[1]
+      when 'create'
+        @logger.info 'create...'.color(:green)
+        stacks.create_change_set
+      when 'destroy'
+        @logger.info 'destroy...'.color(:green)
+        stacks.destroy_change_set
+      when 'report'
+        stacks.report_change_set
+      else
+        return
+      end
+      0
+    end
+
+    def execute_keypair(keypairs)
+      case ARGV[1]
+      when 'create'
+        @logger.info 'create...'.color(:green)
+        keypairs.create
+      when 'destroy'
+        @logger.info 'destroy...'.color(:green)
+        keypairs.destroy if destroy?
+      else
+        return
       end
       0
     end
