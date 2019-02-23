@@ -74,26 +74,10 @@ module CFnDK
       end
     end
 
-    def report_stack
+    def report
       @sequence.each do |stacks|
         stacks.each do |name|
-          @stacks[name].report_stack
-        end
-      end
-    end
-
-    def report_stack_resource
-      @sequence.each do |stacks|
-        stacks.each do |name|
-          @stacks[name].report_stack_resource
-        end
-      end
-    end
-
-    def report_event
-      @sequence.each do |stacks|
-        stacks.each do |name|
-          @stacks[name].report_event
+          @stacks[name].report
         end
       end
     end

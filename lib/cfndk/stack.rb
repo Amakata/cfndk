@@ -155,6 +155,12 @@ module CFnDK
       false
     end
 
+    def report
+      report_stack
+      report_stack_resource
+      report_event
+    end
+
     def report_stack
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
       @logger.info(('stack: ' + @name).color(:green))
