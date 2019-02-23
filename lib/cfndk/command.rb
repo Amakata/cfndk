@@ -66,7 +66,7 @@ module CFnDK
           return 1
         end
         @logger.info 'init...'.color(:green)
-        FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../skel/*'), './')
+        FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../../skel/*'), './')
         @logger.info "create #{@option[:config_path]}".color(:green)
         return 0
       end
