@@ -22,6 +22,19 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 $ gem install cfndk
 ```
 
+## 使い方
+
+```
+$ mkdir cfn-project
+$ cd cfn-project
+$ cfndk init
+$ export AWS_REGION=ap-northeast-1
+$ export AWS_PROFILE=default
+$ cfndk create
+$ cfndk report-event
+$ cfndk destroy -f
+```
+
 ## Credentials設定
 
 次の順番でCredentialsを評価して最初に有効なCredentialsを使用します。

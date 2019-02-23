@@ -1,27 +1,61 @@
-
 keypairs:
-  Key1:
-    key_file: key/key1<%= append_uuid %>.pem
+  CFnDKSampleKey:
+  CFnDKSampleKey2:
+    key_file: key/key2<%= append_uuid %>.pem
 stacks:
-  Stack1:
-    template_file: stack1/stack1.yaml 
-    parameter_input: stack1/env.json
+  CFnDKSampleNetwork:
+    template_file: network/network.yaml
+    parameter_input: network/prod.json
     parameters:
-      VpcName: Prod<%= append_uuid %>
-      InternalDnsName: prod<%= append_uuid %>.local      
+      VpcName: Sample<%= append_uuid %>
+      InternalDnsName: sample<%= append_uuid %>.local
+    timeout_in_minutes: 8
+  CFnDKSampleIam:
+    template_file: iam/iam.yaml
+    parameter_input: iam/prod.json
+    parameters:
+      WebRoleName: WebRole<%= append_uuid %>
+      WebInstanceProfileName: WebInstanceProfile<%= append_uuid %>
     capabilities:
       - CAPABILITY_IAM
       - CAPABILITY_NAMED_IAM
-    timeout_in_minutes: 10
-  Stack2:
-    template_file: stack2/stack2.yaml 
-    parameter_input: stacn2/env.json
+    timeout_in_minutes: 3
+  CFnDKSampleSg:
+    template_file: sg/sg.yaml
+    parameter_input: sg/prod.json
     parameters:
-      VpcName: Prod<%= append_uuid %>
-    capabilities:
-      - CAPABILITY_IAM
-      - CAPABILITY_NAMED_IAM
+      VpcName: Sample<%= append_uuid %>
     depends:
-      - Stack1      
-    timeout_in_minutes: 10
-
+      - CFnDKSampleNetwork
+  CFnDKSampleWeb:
+    template_file: web/web.yaml
+    parameter_input: web/prod.json
+    parameters:
+      VpcName: Sample<%= append_uuid %>
+      InternalDnsName: sample<%= append_uuid %>.local
+      HostName1: web1<%= append_uuid %>
+      HostName2: web2<%= append_uuid %>
+      WebInstanceProfileName: WebInstanceProfile<%= append_uuid %>
+      KeyPair: CFnDKSampleKey<%= append_uuid %>
+    depends:
+      - CFnDKSampleSg
+      - CFnDKSampleIam
+    timeout_in_minutes: 2
+  CFnDKSampleElb:
+    template_file: elb/elb.yaml
+    parameter_input: elb/prod.json
+    parameters:
+      VpcName: Sample<%= append_uuid %>
+      InternalDnsName: sample<%= append_uuid %>.local
+    depends:
+      - CFnDKSampleWeb
+      - CFnDKSampleSg
+    timeout_in_minutes: 5
+  CFnDKSampleDb:
+    template_file: db/db.yaml
+    parameter_input: db/prod.json
+    parameters:
+      VpcName: Sample<%= append_uuid %>
+    depends:
+      - CFnDKSampleSg
+    timeout_in_minutes: 30
