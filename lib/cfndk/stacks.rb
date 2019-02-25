@@ -3,7 +3,6 @@ module CFnDK
     def initialize(data, option, credentials)
       @option = option
       @credentials = credentials
-      @logger = CFnDK::Logger.new(option)
 
       prepare_stack(data)
       prepare_sequence

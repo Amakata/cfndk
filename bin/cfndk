@@ -1,22 +1,7 @@
 #!/usr/bin/env ruby
 
-require 'bundler/setup'
-
-require 'rainbow/ext/string'
-require 'optparse'
-require 'fileutils'
-require 'pathname'
-require 'erb'
-require 'yaml'
-require 'json'
-require 'aws-sdk'
-require 'terminal-table'
-require 'securerandom'
-require 'logger'
+$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
 require 'cfndk.rb'
 
-$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
-
-c = CFnDK::Command.new
-exit c.execute
+CFnDK::Command.start(ARGV)
