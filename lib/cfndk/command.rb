@@ -6,7 +6,7 @@ module CFnDK
     class_option :keypair_names, type: :array, aliases: 'n'
 
     desc 'create', 'create keypair'
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, lazy_default: SecureRandom.uuid
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
     option :properties, type: :hash, aliases: 'p', default: {}
     def create
       CFnDK.logger.info 'create...'.color(:green)
@@ -50,7 +50,7 @@ module CFnDK
     class_option :stack_names, type: :array, aliases: 'n'
 
     desc 'create', 'create stack'
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, lazy_default: SecureRandom.uuid
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
     option :properties, type: :hash, aliases: 'p', default: {}
     def create
       CFnDK.logger.info 'create...'.color(:green)
@@ -144,7 +144,7 @@ module CFnDK
 
     def help(command = nil, subcommand = false)
       super(command, subcommand)
-      exit 2
+      2
     end
 
     class_option :verbose, type: :boolean, aliases: 'v'
@@ -153,28 +153,30 @@ module CFnDK
     desc 'generate-uuid', 'print UUID'
     def generate_uuid
       puts SecureRandom.uuid
+      0
     end
 
     desc 'version', 'print version'
     def version
       puts CFnDK::VERSION
+      0
     end
 
-    desc 'init', 'craete sample cfndk.yaml & CloudFormation yaml & json files.'
-    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
+    desc 'init', 'craete sample cfndk.yml & CloudFormation yaml & json files.'
     def init
-      if File.file?(options[:config_path])
-        CFnDK.logger.error "File exist. #{options[:config_path]}".color(:red)
-        exit 1
+      config_path = "#{Dir.getwd}/cfndk.yml"
+      if File.file?(config_path)
+        CFnDK.logger.error "File exist. #{config_path}".color(:red)
+        return 1
       end
       CFnDK.logger.info 'init...'.color(:green)
       FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../../skel/*'), './')
-      CFnDK.logger.info "create #{options[:config_path]}".color(:green)
+      CFnDK.logger.info "create #{config_path}".color(:green)
     end
 
     desc 'create', 'create keypair & stack'
     option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, lazy_default: SecureRandom.uuid
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
     option :properties, type: :hash, aliases: 'p', default: {}
     option :stack_names, type: :array
     option :keypair_names, type: :array
@@ -185,6 +187,10 @@ module CFnDK
         return 1
       end
       data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      unless data
+        CFnDK.logger.error "File is empty. #{options[:config_path]}".color(:red)
+        return 1
+      end
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
@@ -193,6 +199,11 @@ module CFnDK
       stacks.validate
       keypairs.create
       stacks.create
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
     desc 'destroy', 'destroy keypair & stack'
@@ -216,8 +227,10 @@ module CFnDK
       if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)
         stacks.destroy
         keypairs.destroy
+        return 0
       else
         CFnDK.logger.info 'destroy command was canceled'.color(:green)
+        return 2
       end
     end
 
