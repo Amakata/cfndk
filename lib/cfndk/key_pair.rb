@@ -31,6 +31,10 @@ module CFnDK
       [@name, @option[:uuid]].compact.join('-')
     end
 
+    def original_name
+      @name
+    end
+
     private
 
     def create_key_file(key_pair)

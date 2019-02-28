@@ -7,13 +7,17 @@ module CFnDK
     end
 
     def create
-      return if @option[:keypair_names].instance_of?(Array)
-      @keypairs.each_value(&:create)
+      @keypairs.each_value do |keypair|
+        next if @option[:keypair_names].instance_of?(Array) && !@option[:keypair_names].include?(keypair.original_name)
+        keypair.create
+      end
     end
 
     def destroy
-      return if @option[:keypair_names].instance_of?(Array)
-      @keypairs.each_value(&:destroy)
+      @keypairs.each_value do |keypair|
+        next if @option[:keypair_names].instance_of?(Array) && !@option[:keypair_names].include?(keypair.original_name)
+        keypair.destroy
+      end
     end
 
     private
