@@ -4,4 +4,4 @@ $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
 require 'cfndk.rb'
 
-CFnDK::Command.start(ARGV)
+exit CFnDK::Command.start(ARGV)
