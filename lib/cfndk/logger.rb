@@ -1,6 +1,6 @@
 module CFnDK
   def self.logger
-    @logger = CFnDKLogger.new({}) if  @logger.nil?
+    @logger = CFnDKLogger.new({}) if @logger.nil?
     @logger
   end
 
