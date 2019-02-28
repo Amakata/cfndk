@@ -85,6 +85,7 @@ module CFnDK
 
     def prepare_stack(data)
       @stacks = {}
+      return unless data['stacks'].is_a?(Hash)
       data['stacks'].each do |name, properties|
         @stacks[name] = Stack.new(name, properties, @option, @credentials)
       end
