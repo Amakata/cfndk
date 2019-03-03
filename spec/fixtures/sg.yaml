@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack2
+Parameters:
+  VpcName:
+    Description: Name for this VPC
+    Type: String
+Resources:
+  TestSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Web ELB Acccess Security Group
+      VpcId:
+        Fn::ImportValue: !Sub ${VpcName}-VpcId
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+        Description: Allow HTTP Access From Internet
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: 0.0.0.0/0
+        Description: Allow HTTPS Access From Internet
+      Tags:
+      - Key: Name
+        Value: TestSg
