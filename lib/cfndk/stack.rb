@@ -15,7 +15,7 @@ module CFnDK
 
     def create
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('creating stack: ' + @name).color(:green))
+      CFnDK.logger.info(('creating stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
@@ -36,7 +36,7 @@ module CFnDK
           :stack_create_complete,
           stack_name: name
         )
-        CFnDK.logger.info(('created stack: ' + @name).color(:green))
+        CFnDK.logger.info(('created stack: ' + name).color(:green))
       rescue Aws::Waiters::Errors::FailureStateError => ex
         CFnDK.logger.error ex.message
         report_event
@@ -46,7 +46,7 @@ module CFnDK
 
     def update
       return false if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('updating stack: ' + @name).color(:green))
+      CFnDK.logger.info(('updating stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
@@ -71,12 +71,12 @@ module CFnDK
         :stack_update_complete,
         stack_name: name
       )
-      CFnDK.logger.info(('updated stack: ' + @name).color(:green))
+      CFnDK.logger.info(('updated stack: ' + name).color(:green))
     end
 
     def destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('deleting stack: ' + @name).color(:green))
+      CFnDK.logger.info(('deleting stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       @client.delete_stack(
         stack_name: name
@@ -89,12 +89,12 @@ module CFnDK
         :stack_delete_complete,
         stack_name: name
       )
-      CFnDK.logger.info(('deleted stack: ' + @name).color(:green))
+      CFnDK.logger.info(('deleted stack: ' + name).color(:green))
     end
 
     def create_change_set
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('creating change set: ' + @name).color(:green))
+      CFnDK.logger.info(('creating change set: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
@@ -138,8 +138,8 @@ module CFnDK
 
     def validate
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('validate stack: ' + @name).color(:green))
-      CFnDK.logger.debug('Name        :' + name)
+      CFnDK.logger.info(('validate stack: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + @name)
       @client.validate_template(
         template_body: template_body
       )
@@ -162,7 +162,7 @@ module CFnDK
 
     def report_stack
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('stack: ' + @name).color(:green))
+      CFnDK.logger.info(('stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       begin
         rows = @client.describe_stacks(
@@ -184,7 +184,7 @@ module CFnDK
 
     def report_event
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('stack: ' + @name).color(:green))
+      CFnDK.logger.info(('stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       begin
         rows = @client.describe_stack_events(
@@ -205,7 +205,7 @@ module CFnDK
 
     def report_stack_resource
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('stack: ' + @name).color(:green))
+      CFnDK.logger.info(('stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       begin
         rows = @client.describe_stack_resources(
