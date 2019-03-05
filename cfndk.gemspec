@@ -18,14 +18,15 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'bundler', '~> 1.7'
-  spec.add_development_dependency 'rake', '~> 11.1.2'
+  spec.add_development_dependency 'bundler'
+  spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'aruba'
+  spec.add_development_dependency 'simplecov'
 
-  spec.add_dependency 'thor', '~> 0.20'
-  spec.add_dependency 'rainbow', '~> 3.0.0'
-  spec.add_dependency 'aws-sdk', '~> 3'
-  spec.add_dependency 'camelizable', '~> 0.0.3'
-  spec.add_dependency 'terminal-table', '~> 1'
+  spec.add_dependency 'thor'
+  spec.add_dependency 'rainbow'
+  spec.add_dependency 'aws-sdk'
+  spec.add_dependency 'camelizable'
+  spec.add_dependency 'terminal-table'
 end

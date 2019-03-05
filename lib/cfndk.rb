@@ -1,7 +1,7 @@
 require 'bundler/setup'
 
 require 'rainbow/ext/string'
-require 'optparse'
+require 'camelizable'
 require 'fileutils'
 require 'pathname'
 require 'erb'
@@ -12,6 +12,12 @@ require 'terminal-table'
 require 'securerandom'
 require 'logger'
 require 'thor'
+
+if ENV['CFNDK_COVERAGE']
+  require 'simplecov'
+  root = File.expand_path('../../', __FILE__)
+  SimpleCov.root(root)
+end
 
 require 'cfndk/version'
 require 'cfndk/stack'
