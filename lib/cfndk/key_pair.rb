@@ -20,11 +20,25 @@ module CFnDK
     end
 
     def destroy
-      CFnDK.logger.info(('deleting keypair: ' + name).color(:green))
-      @client.delete_key_pair(
-        key_name: name
-      )
-      CFnDK.logger.info(('deleted keypair: ' + name).color(:green))
+      if exists?
+        CFnDK.logger.info(('deleting keypair: ' + name).color(:green))
+        @client.delete_key_pair(
+          key_name: name
+        )
+        CFnDK.logger.info(('deleted keypair: ' + name).color(:green))
+      else
+        CFnDK.logger.info(('do not delete keypair: ' + name).color(:red))
+      end
+    end
+
+    def exists?
+      !@client.describe_key_pairs(
+        key_names: [
+          name,
+        ]
+      ).key_pairs.empty?
+    rescue Aws::EC2::Errors::InvalidKeyPairNotFound
+      false
     end
 
     def name

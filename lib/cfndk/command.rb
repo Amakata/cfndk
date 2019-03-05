@@ -237,7 +237,7 @@ module CFnDK
         return 2
       end
     rescue => e
-      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.error "(#{e.class}) #{e.message}".color(:red)
       CFnDK.logger.debug e.backtrace
       return 1
     end

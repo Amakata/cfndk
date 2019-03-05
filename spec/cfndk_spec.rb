@@ -729,33 +729,88 @@ RSpec.describe 'CFnDK Command', type: :aruba do
         end
         context 'when destroy and input no' do
           yaml = <<-"YAML"
+          keypairs:
+            Test1:
           stacks:
+            Test:
+              template_file: vpc.yaml
+              parameter_input: vpc.json
+              parameters:
+                VpcName: sample<%= append_uuid%>
+              timeout_in_minutes: 2
           YAML
           before(:each) { write_file(file, yaml) }
+          before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+          before(:each) { copy('%/vpc.json', 'vpc.json') }
           before(:each) { run_command('cfndk destroy') }
-          before(:each) { type('no') }
+          before(:each) { type("no\n") }
           it 'runs the command with the expected results' do
             aggregate_failures do
               expect(last_command_started).not_to be_successfully_executed
               expect(last_command_started).to have_exit_status(2)
               expect(last_command_started).to have_output(/INFO destroy../)
-              expect(last_command_started).to have_output(/Are you sure you want to destroy\? \(y\/n\)/)
+              expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
               expect(last_command_started).to have_output(/INFO destroy command was canceled/)
+              expect(last_command_started).not_to have_output(/INFO deleting stack:/)
+              expect(last_command_started).not_to have_output(/INFO deleted stack:/)
+              expect(last_command_started).not_to have_output(/INFO do not delete keypair: Test1$/)
+                expect(last_command_started).not_to have_output(/INFO do not delete stack: Test$/)                
             end
           end
         end
         context 'when destroy and input yes' do
           yaml = <<-"YAML"
+          keypairs:
+            Test1:
           stacks:
+            Test:
+              template_file: vpc.yaml
+              parameter_input: vpc.json
+              parameters:
+                VpcName: sample<%= append_uuid%>
+              timeout_in_minutes: 2
           YAML
           before(:each) { write_file(file, yaml) }
+          before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+          before(:each) { copy('%/vpc.json', 'vpc.json') }
           before(:each) { run_command('cfndk destroy') }
-          before(:each) { type('yes') }
+          before(:each) { type("yes\n") }
           it 'runs the command with the expected results' do
             aggregate_failures do
               expect(last_command_started).to be_successfully_executed
               expect(last_command_started).to have_output(/INFO destroy../)
-              expect(last_command_started).to have_output(/Are you sure you want to destroy\? \(y\/n\)/)
+              expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
+              expect(last_command_started).to have_output(/INFO do not delete keypair: Test1$/)
+              expect(last_command_started).to have_output(/INFO do not delete stack: Test$/)
+            end
+          end
+        end
+
+        context 'when destroy and input yes after create' do
+          yaml = <<-"YAML"
+          keypairs:
+            Test1:
+          stacks:
+            Test:
+              template_file: vpc.yaml
+              parameter_input: vpc.json
+              parameters:
+                VpcName: sample<%= append_uuid%>
+              timeout_in_minutes: 2
+          YAML
+          before(:each) { write_file(file, yaml) }
+          before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+          before(:each) { copy('%/vpc.json', 'vpc.json') }
+          before(:each) { run_command_and_stop('cfndk create') }
+          before(:each) { run_command('cfndk destroy') }
+          before(:each) { type("yes\n") }
+          it 'runs the command with the expected results' do
+            aggregate_failures do
+              expect(last_command_started).to be_successfully_executed
+              expect(last_command_started).to have_output(/INFO destroy../)
+              expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
+              expect(last_command_started).to have_output(/INFO deleted keypair: Test1$/)
+              expect(last_command_started).to have_output(/INFO deleted stack: Test$/)
             end
           end
         end

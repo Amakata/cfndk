@@ -76,15 +76,20 @@ module CFnDK
 
     def destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('deleting stack: ' + name).color(:green))
-      CFnDK.logger.debug('Name        :' + name)
-      @client.delete_stack(
-        stack_name: name
-      )
+      if exits?
+        CFnDK.logger.info(('deleting stack: ' + name).color(:green))
+        CFnDK.logger.debug('Name        :' + name)
+        @client.delete_stack(
+          stack_name: name
+        )
+      else
+        CFnDK.logger.info(('do not delete stack: ' + name).color(:red))
+      end
     end
 
     def wait_until_destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless exits?
       @client.wait_until(
         :stack_delete_complete,
         stack_name: name
