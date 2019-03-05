@@ -23,7 +23,7 @@ RSpec.describe 'CFnDK Command', type: :aruba do
       it 'runs the command with the expected results' do
         aggregate_failures do
           expect(last_command_started).to be_successfully_executed
-          expect(last_command_started).to have_output('0.0.7')
+          expect(last_command_started).to have_output(/0.0.7/)
         end
       end
     end
@@ -89,8 +89,8 @@ RSpec.describe 'CFnDK Command', type: :aruba do
 
     describe 'create', create: true do
       before(:each) { setup_aruba }
-      before(:each) { set_environment_variable('AWS_REGION', aws_region) }
-      before(:each) { set_environment_variable('AWS_PROFILE', aws_profile) }
+      before(:each) { prepend_environment_variable('AWS_REGION', aws_region) }
+      before(:each) { prepend_environment_variable('AWS_PROFILE', aws_profile) }
 
       context 'when there are no cfndk.yml in work directory' do
         before(:each) { run_command('cfndk create') }
@@ -548,6 +548,215 @@ RSpec.describe 'CFnDK Command', type: :aruba do
               end
             end
             after(:each) { run_command("cfndk destroy -f -u=#{uuid}") }
+          end
+          context 'when CFNDK_UUID=38437346-c75c-47c5-83b4-d504f85e275b and one stacks and use append_uuid', uuid: true do
+            let(:uuid) { '38437346-c75c-47c5-83b4-d504f85e275b' }
+            yaml = <<-"YAML"
+            stacks:
+              Test:
+                template_file: vpc.yaml
+                parameter_input: vpc.json
+                parameters:
+                  VpcName: sample<%= append_uuid%>
+                timeout_in_minutes: 2
+              Test2:
+                template_file: sg.yaml
+                parameter_input: sg.json
+                parameters:
+                  VpcName: sample<%= append_uuid%>
+                depends:
+                  - Test
+            YAML
+            before(:each) { set_environment_variable('CFNDK_UUID', uuid) }
+            before(:each) { write_file(file, yaml) }
+            before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+            before(:each) { copy('%/vpc.json', 'vpc.json') }
+            before(:each) { copy('%/sg.yaml', 'sg.yaml') }
+            before(:each) { copy('%/sg.json', 'sg.json') }
+            before(:each) { run_command('cfndk create') }
+            it 'runs the command with the expected results' do
+              aggregate_failures do
+                expect(last_command_started).to be_successfully_executed
+                expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
+              end
+            end
+            after(:each) { run_command('cfndk destroy -f') }
+          end
+
+          context 'when CFNDK_UUID=38437346-c75c-47c5-83b4-d504f85e275b and --stack-names=Test', uuid: true do
+            let(:uuid) { '38437346-c75c-47c5-83b4-d504f85e275b' }
+            yaml = <<-"YAML"
+            stacks:
+              Test:
+                template_file: vpc.yaml
+                parameter_input: vpc.json
+                parameters:
+                  VpcName: sample<%= append_uuid%>
+                timeout_in_minutes: 2
+              Test2:
+                template_file: sg.yaml
+                parameter_input: sg.json
+                parameters:
+                  VpcName: sample<%= append_uuid%>
+                depends:
+                  - Test
+            YAML
+            before(:each) { set_environment_variable('CFNDK_UUID', uuid) }
+            before(:each) { write_file(file, yaml) }
+            before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+            before(:each) { copy('%/vpc.json', 'vpc.json') }
+            before(:each) { copy('%/sg.yaml', 'sg.yaml') }
+            before(:each) { copy('%/sg.json', 'sg.json') }
+            before(:each) { run_command('cfndk create --stack-names=Test') }
+            it 'runs the command with the expected results' do
+              aggregate_failures do
+                expect(last_command_started).to be_successfully_executed
+                expect(last_command_started).to have_output(/INFO create.../)
+                expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
+                expect(last_command_started).not_to have_output(/INFO validate stack: Test2-#{uuid}$/)
+                expect(last_command_started).not_to have_output(/INFO creating stack: Test2-#{uuid}$/)
+                expect(last_command_started).not_to have_output(/INFO created stack: Test2-#{uuid}$/)
+              end
+            end
+            after(:each) { run_command('cfndk destroy -f') }
+          end
+          context 'when CFNDK_UUID=38437346-c75c-47c5-83b4-d504f85e275b and --stack-names=Test Test2', uuid: true do
+            let(:uuid) { '38437346-c75c-47c5-83b4-d504f85e275b' }
+            yaml = <<-"YAML"
+            stacks:
+              Test:
+                template_file: vpc.yaml
+                parameter_input: vpc.json
+                parameters:
+                  VpcName: sample<%= append_uuid%>
+                timeout_in_minutes: 2
+              Test2:
+                template_file: sg.yaml
+                parameter_input: sg.json
+                parameters:
+                  VpcName: sample<%= append_uuid%>
+                depends:
+                  - Test
+              Test3:
+                template_file: iam.yaml
+                parameter_input: iam.json
+                parameters:
+                  WebRoleName: WebhRole<%= append_uuid%>
+                capabilities:
+                  - CAPABILITY_NAMED_IAM
+                timeout_in_minutes: 3
+            YAML
+            before(:each) { set_environment_variable('CFNDK_UUID', uuid) }
+            before(:each) { write_file(file, yaml) }
+            before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+            before(:each) { copy('%/vpc.json', 'vpc.json') }
+            before(:each) { copy('%/sg.yaml', 'sg.yaml') }
+            before(:each) { copy('%/sg.json', 'sg.json') }
+            before(:each) { copy('%/iam.yaml', 'iam.yaml') }
+            before(:each) { copy('%/iam.json', 'iam.json') }
+            before(:each) { run_command('cfndk create --stack-names=Test Test2') }
+            it 'runs the command with the expected results' do
+              aggregate_failures do
+                expect(last_command_started).to be_successfully_executed
+                expect(last_command_started).to have_output(/INFO create.../)
+                expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
+                expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
+                expect(last_command_started).not_to have_output(/INFO validate stack: Test3-#{uuid}$/)
+                expect(last_command_started).not_to have_output(/INFO creating stack: Test3-#{uuid}$/)
+                expect(last_command_started).not_to have_output(/INFO created stack: Test3-#{uuid}$/)
+              end
+            end
+            after(:each) { run_command('cfndk destroy -f') }
+          end
+        end
+      end
+    end
+    describe 'destroy', destroy: true do
+      before(:each) { setup_aruba }
+      before(:each) { prepend_environment_variable('AWS_REGION', aws_region) }
+      before(:each) { prepend_environment_variable('AWS_PROFILE', aws_profile) }
+
+      context 'when there are no cfndk.yml in work directory' do
+        before(:each) { run_command('cfndk destroy -f') }
+        it 'runs the command with the expected results' do
+          aggregate_failures do
+            expect(last_command_started).not_to be_successfully_executed
+            expect(last_command_started).to have_exit_status(1)
+            expect(last_command_started).to have_output(/ERROR File does not exist./)
+          end
+        end
+      end
+      context 'when there is cfndk2.yml in work directory' do
+        let(:file2) { 'cfndk2.yml' }
+        context 'when -c cfndk2.yml is empty stacks only' do
+          yaml = <<-"YAML"
+          stacks:
+          YAML
+          before(:each) { write_file(file2, yaml) }
+          before(:each) { run_command("cfndk destroy -f -c=#{file2}") }
+          it 'runs the command with the expected results' do
+            aggregate_failures do
+              expect(last_command_started).to be_successfully_executed
+              expect(last_command_started).to have_output(/INFO destroy.../)
+            end
+          end
+        end
+      end
+      context 'when there is cfndk.yml in work directory' do
+        let(:file) { 'cfndk.yml' }
+
+        context 'when cfndk.yml is empty file' do
+          before(:each) { touch(file) }
+          before(:each) { run_command('cfndk destroy -f') }
+          it 'runs the command with the expected results' do
+            aggregate_failures do
+              expect(last_command_started).not_to be_successfully_executed
+              expect(last_command_started).to have_exit_status(1)
+              expect(last_command_started).to have_output(/ERROR File is empty./)
+            end
+          end
+        end
+        context 'when destroy and input no' do
+          yaml = <<-"YAML"
+          stacks:
+          YAML
+          before(:each) { write_file(file, yaml) }
+          before(:each) { run_command('cfndk destroy') }
+          before(:each) { type('no') }
+          it 'runs the command with the expected results' do
+            aggregate_failures do
+              expect(last_command_started).not_to be_successfully_executed
+              expect(last_command_started).to have_exit_status(2)
+              expect(last_command_started).to have_output(/INFO destroy../)
+              expect(last_command_started).to have_output(/Are you sure you want to destroy\? \(y\/n\)/)
+              expect(last_command_started).to have_output(/INFO destroy command was canceled/)
+            end
+          end
+        end
+        context 'when destroy and input yes' do
+          yaml = <<-"YAML"
+          stacks:
+          YAML
+          before(:each) { write_file(file, yaml) }
+          before(:each) { run_command('cfndk destroy') }
+          before(:each) { type('yes') }
+          it 'runs the command with the expected results' do
+            aggregate_failures do
+              expect(last_command_started).to be_successfully_executed
+              expect(last_command_started).to have_output(/INFO destroy../)
+              expect(last_command_started).to have_output(/Are you sure you want to destroy\? \(y\/n\)/)
+            end
           end
         end
       end

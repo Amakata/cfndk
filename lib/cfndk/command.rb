@@ -219,6 +219,10 @@ module CFnDK
         return 1
       end
       data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      unless data
+        CFnDK.logger.error "File is empty. #{options[:config_path]}".color(:red)
+        return 1
+      end
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
@@ -232,6 +236,10 @@ module CFnDK
         CFnDK.logger.info 'destroy command was canceled'.color(:green)
         return 2
       end
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
     desc 'report', 'report stack'
@@ -250,6 +258,11 @@ module CFnDK
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.report
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
     no_commands do
