@@ -254,6 +254,10 @@ module CFnDK
         return 1
       end
       data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      unless data
+        CFnDK.logger.error "File is empty. #{options[:config_path]}".color(:red)
+        return 1
+      end
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
