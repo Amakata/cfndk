@@ -5,8 +5,8 @@ RSpec.describe 'CFnDK', type: :aruba do
     Aruba.configure { |c| c.exit_timeout = 60 * 5 }
   end
   before(:each) { setup_aruba }
-  before(:each) { set_environment_variable('AWS_REGION', 'ap-northeast-1') }
-  before(:each) { set_environment_variable('AWS_PROFILE', 'magento-cfn-ci') }
+  before(:each) { set_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
+  before(:each) { set_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
 
   describe 'bin/cfndk' do
     describe 'report', report: true do
@@ -79,16 +79,12 @@ RSpec.describe 'CFnDK', type: :aruba do
                 - Test
           YAML
           context 'without UUID' do
-            before(:context) { setup_aruba }
-            before(:context) { set_environment_variable('AWS_REGION', 'ap-northeast-1') }
-            before(:context) { set_environment_variable('AWS_PROFILE', 'magento-cfn-ci') }
-            before(:context) { write_file('cfndk.yml', yaml) }
-            before(:context) { copy('%/vpc.yaml', 'vpc.yaml') }
-            before(:context) { copy('%/vpc.json', 'vpc.json') }
-            before(:context) { copy('%/sg.yaml', 'sg.yaml') }
-            before(:context) { copy('%/sg.json', 'sg.json') }
-            before(:context) { run_command_and_stop('cfndk destroy -f') }
-            before(:context) { run_command_and_stop('cfndk create') }
+            before(:each) { write_file('cfndk.yml', yaml) }
+            before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+            before(:each) { copy('%/vpc.json', 'vpc.json') }
+            before(:each) { copy('%/sg.yaml', 'sg.yaml') }
+            before(:each) { copy('%/sg.json', 'sg.json') }
+            before(:each) { run_command_and_stop('cfndk create') }
             context 'without option' do
               before(:each) { run_command('cfndk report') }
               it 'displays stacks report' do
@@ -120,19 +116,15 @@ RSpec.describe 'CFnDK', type: :aruba do
                 end
               end
             end
-            after(:context) { run_command('cfndk destroy -f') }
+            after(:each) { run_command('cfndk destroy -f') }
           end
           context 'with UUID' do
-            before(:context) { setup_aruba }
-            before(:context) { set_environment_variable('AWS_REGION', 'ap-northeast-1') }
-            before(:context) { set_environment_variable('AWS_PROFILE', 'magento-cfn-ci') }
-            before(:context) { write_file('cfndk.yml', yaml) }
-            before(:context) { copy('%/vpc.yaml', 'vpc.yaml') }
-            before(:context) { copy('%/vpc.json', 'vpc.json') }
-            before(:context) { copy('%/sg.yaml', 'sg.yaml') }
-            before(:context) { copy('%/sg.json', 'sg.json') }
-            before(:context) { run_command_and_stop('cfndk destroy -f') }
-            before(:context) { run_command_and_stop('cfndk create -u 38437346-c75c-47c5-83b4-d504f85e275b') }
+            before(:each) { write_file('cfndk.yml', yaml) }
+            before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+            before(:each) { copy('%/vpc.json', 'vpc.json') }
+            before(:each) { copy('%/sg.yaml', 'sg.yaml') }
+            before(:each) { copy('%/sg.json', 'sg.json') }
+            before(:each) { run_command_and_stop('cfndk create -u 38437346-c75c-47c5-83b4-d504f85e275b') }
             context 'without option' do
               before(:each) { run_command('cfndk report -u 38437346-c75c-47c5-83b4-d504f85e275b') }
               it 'displays stacks report' do
@@ -164,7 +156,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                 end
               end
             end
-            after(:context) { run_command('cfndk destroy -f -u 38437346-c75c-47c5-83b4-d504f85e275b') }
+            after(:each) { run_command('cfndk destroy -f -u 38437346-c75c-47c5-83b4-d504f85e275b') }
           end
         end
       end

@@ -1,12 +1,11 @@
 require 'spec_helper'
 
 RSpec.describe 'CFnDK', type: :aruba do
-  let(:aws_region) { 'ap-northeast-1' }
-  let(:aws_profile) { 'magento-cfn-ci' }
   before(:each) do
     Aruba.configure { |c| c.exit_timeout = 60 * 3 }
   end
-
+  before(:each) { set_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
+  before(:each) { set_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
   describe 'bin/cfndk' do
     before(:each) { setup_aruba }
     let(:file) { 'cfndk.yml' }
@@ -15,9 +14,6 @@ RSpec.describe 'CFnDK', type: :aruba do
     let(:uuid) { '38437346-c75c-47c5-83b4-d504f85e275b' }
 
     describe 'create', create: true do
-      before(:each) { prepend_environment_variable('AWS_REGION', aws_region) }
-      before(:each) { prepend_environment_variable('AWS_PROFILE', aws_profile) }
-
       context 'without cfndk.yml' do
         before(:each) { run_command('cfndk create') }
         it 'displays file does not exist error and status code = 1' do

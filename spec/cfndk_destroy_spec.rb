@@ -1,12 +1,11 @@
 require 'spec_helper'
 
 RSpec.describe 'CFnDK', type: :aruba do
-  let(:aws_region) { 'ap-northeast-1' }
-  let(:aws_profile) { 'magento-cfn-ci' }
   before(:each) do
     Aruba.configure { |c| c.exit_timeout = 60 * 3 }
   end
-
+  before(:each) { prepend_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
+  before(:each) { prepend_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
   describe 'bin/cfndk' do
     before(:each) { setup_aruba }
     let(:file) { 'cfndk.yml' }
@@ -15,15 +14,12 @@ RSpec.describe 'CFnDK', type: :aruba do
     let(:uuid) { '38437346-c75c-47c5-83b4-d504f85e275b' }
 
     describe 'destroy', destroy: true do
-      before(:each) { prepend_environment_variable('AWS_REGION', aws_region) }
-      before(:each) { prepend_environment_variable('AWS_PROFILE', aws_profile) }
-
       context 'without cfndk.yml' do
         before(:each) { run_command('cfndk destroy -f') }
         it 'displays file does not exist error and status code = 1' do
           aggregate_failures do
             expect(last_command_started).to have_exit_status(1)
-            expect(last_command_started).to have_output(/ERROR File does not exist./)
+            expect(last_command_started).to have_output(/ ERROR \(RuntimeError\) File does not exist./)
           end
         end
       end
@@ -70,7 +66,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           before(:each) { copy('%/vpc.json', 'vpc.json') }
           before(:each) { run_command('cfndk destroy') }
           before(:each) { type('no') }
-          it do
+          it 'displays confirm message and cancel message and status code = 2' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(2)
               expect(last_command_started).to have_output(/INFO destroy../)
@@ -79,7 +75,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               expect(last_command_started).not_to have_output(/INFO deleting stack:/)
               expect(last_command_started).not_to have_output(/INFO deleted stack:/)
               expect(last_command_started).not_to have_output(/INFO do not delete keypair: Test1$/)
-              expect(last_command_started).not_to have_output(/INFO do not delete stack: Test$/)                
+              expect(last_command_started).not_to have_output(/INFO do not delete stack: Test$/)
             end
           end
         end
@@ -99,9 +95,10 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { write_file(file, yaml) }
             before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
             before(:each) { copy('%/vpc.json', 'vpc.json') }
+            before(:each) { run_command_and_stop('cfndk destroy -f') }
             before(:each) { run_command('cfndk destroy') }
             before(:each) { type('yes') }
-            it do
+            it 'displays confirm message and do not delete message' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
                 expect(last_command_started).to have_output(/INFO destroy../)
@@ -126,10 +123,11 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { write_file(file, yaml) }
             before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
             before(:each) { copy('%/vpc.json', 'vpc.json') }
-            before(:each) { run_command_and_stop('cfndk create') }
+            before(:each) { run_command('cfndk create') }
+            before(:each) { stop_all_commands }
             before(:each) { run_command('cfndk destroy') }
             before(:each) { type('yes') }
-            it do
+            it 'displays confirm message and delete message' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
                 expect(last_command_started).to have_output(/INFO destroy../)
@@ -138,6 +136,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                 expect(last_command_started).to have_output(/INFO deleted stack: Test$/)
               end
             end
+            after(:each) { run_command('cfndk destroy -f') }
           end
         end
       end
