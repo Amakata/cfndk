@@ -3,43 +3,55 @@ module CFnDK
     class_option :verbose, type: :boolean, aliases: 'v'
     class_option :color, type: :boolean, default: true
     class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    class_option :keypair_names, type: :array, aliases: 'n'
+    class_option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
+    class_option :keypair_names, type: :array
 
     desc 'create', 'create keypair'
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
     option :properties, type: :hash, aliases: 'p', default: {}
     def create
       CFnDK.logger.info 'create...'.color(:green)
-      unless File.file?(options[:config_path])
-        CFnDK.logger.error "File does not exist. #{options[:config_path]}".color(:red)
-        return 1
-      end
-      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      data = load_config_data(options)
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
       keypairs.create
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
-    desc 'destroy', 'create keypair'
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
+    desc 'destroy', 'destroy keypair'
     option :force, type: :boolean, aliases: 'f', default: false
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
-      unless File.file?(options[:config_path])
-        CFnDK.logger.error "File does not exist. #{options[:config_path]}".color(:red)
-        return 1
-      end
-      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      data = load_config_data(options)
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
 
       if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)
         keypairs.destroy
+        return 0
       else
         CFnDK.logger.info 'destroy command was canceled'.color(:green)
+        return 2
       end
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    private
+
+    def load_config_data(options)
+      raise "File does not exist. #{options[:config_path]}" unless File.file?(options[:config_path])
+      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      return data if data
+      CFnDK.logger.error "File is empty. #{options[:config_path]}".color(:red)
+      nil
     end
   end
 
@@ -47,23 +59,25 @@ module CFnDK
     class_option :verbose, type: :boolean, aliases: 'v'
     class_option :color, type: :boolean, default: true
     class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    class_option :stack_names, type: :array, aliases: 'n'
+    class_option :stack_names, type: :array
+
 
     desc 'create', 'create stack'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
     option :properties, type: :hash, aliases: 'p', default: {}
     def create
       CFnDK.logger.info 'create...'.color(:green)
-      unless File.file?(options[:config_path])
-        CFnDK.logger.error "File does not exist. #{options[:config_path]}".color(:red)
-        return 1
-      end
-      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      data = load_config_data(options)
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.validate
       stacks.create
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
     desc 'update', 'update stack'
@@ -71,16 +85,17 @@ module CFnDK
     option :properties, type: :hash, aliases: 'p', default: {}
     def update
       CFnDK.logger.info 'update...'.color(:green)
-      unless File.file?(options[:config_path])
-        CFnDK.logger.error "File does not exist. #{options[:config_path]}".color(:red)
-        return 1
-      end
-      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      data = load_config_data(options)
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.validate
       stacks.update
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
     desc 'destroy', 'destroy stack'
@@ -88,49 +103,61 @@ module CFnDK
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
-      unless File.file?(options[:config_path])
-        CFnDK.logger.error "File does not exist. #{options[:config_path]}".color(:red)
-        return 1
-      end
-      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      data = load_config_data(options)
 
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
 
       if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)
         stacks.destroy
+        return 0
       else
         CFnDK.logger.info 'destroy command was canceled'.color(:green)
+        return 2
       end
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
     desc 'validate', 'validate stack'
     def validate
       CFnDK.logger.info 'validate...'.color(:green)
-      unless File.file?(options[:config_path])
-        CFnDK.logger.error "File does not exist. #{options[:config_path]}".color(:red)
-        return 1
-      end
-      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
-
+      data = load_config_data(options)
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.validate
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
     desc 'report', 'report stack'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
     def report
       CFnDK.logger.info 'report...'.color(:green)
-      unless File.file?(options[:config_path])
-        CFnDK.logger.error "File does not exist. #{options[:config_path]}".color(:red)
-        return 1
-      end
-      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
-
+      data = load_config_data(options)
       credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.report
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    private
+
+    def load_config_data(options)
+      raise "File does not exist. #{options[:config_path]}" unless File.file?(options[:config_path])
+      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      return data if data
+      CFnDK.logger.error "File is empty. #{options[:config_path]}".color(:red)
+      nil
     end
   end
 
