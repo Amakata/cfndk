@@ -22,6 +22,16 @@ RSpec.describe 'CFnDK', type: :aruba do
       end
     end
 
+    context 'invalid command' do
+      before(:each) { run_command('cfndk sstack') }
+      it 'displays help and status code = 1' do
+        aggregate_failures do
+          expect(last_command_started).to have_exit_status(1)
+          expect(last_command_started).to have_output(/Could not find command "sstack"\./)
+        end
+      end
+    end
+
     describe 'version', help: true do
       before(:each) { run_command('cfndk version') }
       it 'displays version' do
