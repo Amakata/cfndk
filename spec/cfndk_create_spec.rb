@@ -31,7 +31,7 @@ RSpec.describe 'CFnDK', type: :aruba do
         before(:each) { write_file(file2, yaml) }
         context 'when -c cfndk2.yml and empty keypairs' do
           before(:each) { run_command("cfndk create -c=#{file2}") }
-          it do
+          it 'displays empty keypair log' do
             aggregate_failures do
               expect(last_command_started).to be_successfully_executed
               expect(last_command_started).to have_output(/INFO create.../)
@@ -41,7 +41,7 @@ RSpec.describe 'CFnDK', type: :aruba do
 
         context 'when --config-path cfndk2.yml and empty keypairs' do
           before(:each) { run_command("cfndk create --config-path=#{file2}") }
-          it do
+          it 'displays empty keypair log' do
             aggregate_failures do
               expect(last_command_started).to be_successfully_executed
               expect(last_command_started).to have_output(/INFO create.../)
