@@ -4,8 +4,8 @@ RSpec.describe 'CFnDK', type: :aruba do
   before(:each) do
     Aruba.configure { |c| c.exit_timeout = 60 * 3 }
   end
-  before(:each) { prepend_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
-  before(:each) { prepend_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
+  before(:each) { set_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
+  before(:each) { set_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
   describe 'bin/cfndk' do
     before(:each) { setup_aruba }
     let(:file) { 'cfndk.yml' }
@@ -95,9 +95,11 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { write_file(file, yaml) }
             before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
             before(:each) { copy('%/vpc.json', 'vpc.json') }
-            before(:each) { run_command_and_stop('cfndk destroy -f') }
+            before(:each) { run_command('cfndk destroy -f') }
+            before(:each) { stop_all_commands }
             before(:each) { run_command('cfndk destroy') }
             before(:each) { type('yes') }
+            before(:each) { stop_all_commands }
             it 'displays confirm message and do not delete message' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
@@ -127,6 +129,7 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { stop_all_commands }
             before(:each) { run_command('cfndk destroy') }
             before(:each) { type('yes') }
+            before(:each) { stop_all_commands }
             it 'displays confirm message and delete message' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
