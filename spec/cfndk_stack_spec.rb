@@ -82,7 +82,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'with stacks:' do
             context 'without stack' do
               before(:each) { write_file(file, 'stacks:') }
@@ -94,7 +94,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                 end
               end
             end
-  
+
             context 'with a stack' do
               yaml = <<-"YAML"
               stacks:
@@ -163,7 +163,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   template_file: sg.yaml
                   parameter_input: sg.json
               YAML
-  
+
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
@@ -193,7 +193,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   depends:
                     - Test
               YAML
-  
+
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
@@ -216,7 +216,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   parameter_input: iam.json
                   timeout_in_minutes: 2
               YAML
-  
+
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/iam.yaml', 'iam.yaml') }
               before(:each) { copy('%/iam.json', 'iam.json') }
@@ -239,7 +239,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                     - CAPABILITY_NAMED_IAM
                   timeout_in_minutes: 3
               YAML
-  
+
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/iam.yaml', 'iam.yaml') }
               before(:each) { copy('%/iam.json', 'iam.json') }
@@ -445,7 +445,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'when --config-path cfndk2.yml -f and empty stacks' do
             before(:each) { run_command("cfndk stack destroy --config-path=#{file2} -f") }
             it 'displays empty stack log' do
@@ -589,7 +589,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'when --config-path cfndk2.yml and empty stacks' do
             before(:each) { run_command("cfndk stack update --config-path=#{file2}") }
             it 'displays empty stack log' do
@@ -637,8 +637,64 @@ RSpec.describe 'CFnDK', type: :aruba do
             end
           end
         end
+        context 'when valid yaml' do
+          yaml = <<-"YAML"
+          stacks:
+            Test:
+              template_file: vpc.yaml
+              parameter_input: vpc.json
+              timeout_in_minutes: 2
+          YAML
+          before(:each) { write_file(file, yaml) }
+          before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+          before(:each) { copy('%/vpc.json', 'vpc.json') }
+          before(:each) { run_command('cfndk stack validate') }
+          it do
+            aggregate_failures do
+              expect(last_command_started).to have_exit_status(0)
+              expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+            end
+          end
+        end
+        context 'when empty yaml' do
+          yaml = <<-"YAML"
+          stacks:
+            Test:
+              template_file: vpc.yaml
+              timeout_in_minutes: 2
+          YAML
+          before(:each) { write_file(file, yaml) }
+          before(:each) { copy('%/empty_resource.yaml', 'vpc.yaml') }
+          before(:each) { run_command('cfndk stack validate') }
+          it do
+            aggregate_failures do
+              expect(last_command_started).to have_exit_status(1)
+              expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+              expect(last_command_started).to have_output(/ERROR Template format error: At least one Resources member must be defined\.$/)
+            end
+          end
+        end
+        context 'when invalid yaml' do
+          yaml = <<-"YAML"
+          stacks:
+            Test:
+              template_file: vpc.yaml
+              parameter_input: vpc.json
+              timeout_in_minutes: 2
+          YAML
+          before(:each) { write_file(file, yaml) }
+          before(:each) { copy('%/invalid_vpc.yaml', 'vpc.yaml') }
+          before(:each) { copy('%/vpc.json', 'vpc.json') }
+          before(:each) { run_command('cfndk stack validate') }
+          it do
+            aggregate_failures do
+              expect(last_command_started).to have_exit_status(1)
+              expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+              expect(last_command_started).to have_output(/ERROR \[\/Resources\] 'null' values are not allowed in templates$/)
+            end
+          end
+        end
       end
-
       describe 'report', report: true do
         context 'without cfndk.yml' do
           before(:each) { run_command('cfndk stack report') }
