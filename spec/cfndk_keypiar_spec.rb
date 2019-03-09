@@ -14,6 +14,26 @@ RSpec.describe 'CFnDK', type: :aruba do
     let(:uuid) { '38437346-c75c-47c5-83b4-d504f85e275b' }
 
     describe 'keypair' do
+      context 'without subcommand', help: true do
+        before(:each) { run_command('cfndk keypair') }
+        it 'displays help and status code = 2' do
+          aggregate_failures do
+            expect(last_command_started).to have_exit_status(2)
+          end
+        end
+      end
+
+      describe 'help', help: true do
+        context 'without subsubcommand' do
+          before(:each) { run_command('cfndk keypair help') }
+          it 'displays help and status code = 2' do
+            aggregate_failures do
+              expect(last_command_started).to have_exit_status(2)
+            end
+          end
+        end
+      end
+
       describe 'create' do
         context 'without cfndk.yml' do
           before(:each) { run_command('cfndk keypair create') }
