@@ -29,14 +29,14 @@ module CFnDK
   class KeyPairCommand < Thor
     include SubcommandHelpReternable
     include ConfigFileLoadable
-    class_option :verbose, type: :boolean, aliases: 'v'
-    class_option :color, type: :boolean, default: true
-    class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    class_option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
-    class_option :keypair_names, type: :array
+    class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
+    class_option :color, type: :boolean, default: true, desc: 'Use colored output'
+    class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    class_option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    class_option :keypair_names, type: :array, desc: 'Target keypair names'
 
     desc 'create', 'Create keypair'
-    option :properties, type: :hash, aliases: 'p', default: {}
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
@@ -52,7 +52,7 @@ module CFnDK
     end
 
     desc 'destroy', 'Destroy keypair'
-    option :force, type: :boolean, aliases: 'f', default: false
+    option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
@@ -78,14 +78,14 @@ module CFnDK
     include SubcommandHelpReternable
     include ConfigFileLoadable
 
-    class_option :verbose, type: :boolean, aliases: 'v'
-    class_option :color, type: :boolean, default: true
-    class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    class_option :stack_names, type: :array
+    class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
+    class_option :color, type: :boolean, default: true, desc: 'Use colored output'
+    class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    class_option :stack_names, type: :array, desc: 'Target stack names'
 
     desc 'create', 'Create stack'
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
-    option :properties, type: :hash, aliases: 'p', default: {}
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
@@ -102,8 +102,8 @@ module CFnDK
     end
 
     desc 'update', 'Update stack'
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
-    option :properties, type: :hash, aliases: 'p', default: {}
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
     def update
       CFnDK.logger.info 'update...'.color(:green)
       data = load_config_data(options)
@@ -120,8 +120,8 @@ module CFnDK
     end
 
     desc 'destroy', 'Destroy stack'
-    option :force, type: :boolean, aliases: 'f', default: false
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
+    option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
@@ -157,7 +157,7 @@ module CFnDK
     end
 
     desc 'report', 'Report stack'
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     def report
       CFnDK.logger.info 'report...'.color(:green)
       data = load_config_data(options)
@@ -186,8 +186,8 @@ module CFnDK
       2
     end
 
-    class_option :verbose, type: :boolean, aliases: 'v'
-    class_option :color, type: :boolean, default: true
+    class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
+    class_option :color, type: :boolean, default: true, desc: 'Use colored output'
 
     desc 'generate-uuid', 'Print UUID'
     def generate_uuid
@@ -214,11 +214,11 @@ module CFnDK
     end
 
     desc 'create', 'Create keypair & stack'
-    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
-    option :properties, type: :hash, aliases: 'p', default: {}
-    option :stack_names, type: :array
-    option :keypair_names, type: :array
+    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    option :stack_names, type: :array, desc: 'Target stack names'
+    option :keypair_names, type: :array, desc: 'Target keypair names'
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
@@ -238,11 +238,11 @@ module CFnDK
     end
 
     desc 'destroy', 'Destroy keypair & stack'
-    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    option :force, type: :boolean, aliases: 'f', default: false
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
-    option :stack_names, type: :array
-    option :keypair_names, type: :array
+    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :stack_names, type: :array, desc: 'Target stack names'
+    option :keypair_names, type: :array, desc: 'Target keypair names'
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
@@ -266,9 +266,9 @@ module CFnDK
     end
 
     desc 'report', 'Report stack'
-    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml"
-    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil
-    option :stack_names, type: :array, aliases: 'n'
+    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :stack_names, type: :array, desc: 'Target stack names'
     def report
       CFnDK.logger.info 'report...'.color(:green)
 
