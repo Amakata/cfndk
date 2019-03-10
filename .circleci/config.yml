@@ -43,8 +43,7 @@ jobs:
             export AWS_REGION=ap-northeast-1
             CFNDK_COVERAGE=1 bundle exec rspec \
               --format progress \
-              --out /tmp/test-results/rspec.xml \
-              --format progress
+              --out /tmp/test-results/rspec.xml
               
       # collect reports
       - store_test_results:
