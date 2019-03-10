@@ -1,9 +1,6 @@
 require 'spec_helper'
 
 RSpec.describe 'CFnDK', type: :aruba do
-  before(:each) do
-    Aruba.configure { |c| c.exit_timeout = 60 * 3 }
-  end
   before(:each) { prepend_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
   before(:each) { prepend_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
   describe 'bin/cfndk' do
