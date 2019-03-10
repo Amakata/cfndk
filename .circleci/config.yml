@@ -60,8 +60,8 @@ workflows:
   version: 2
   my_workflow:
     jobs:
-      - HOLD-TEST: # ボタン押したら実行。
-          type: approval
-      - test:
-          requires:
-            - HOLD-TEST
+    - HOLD-TEST:
+        type: approval
+    - test:
+        requires:
+        - HOLD-TEST
