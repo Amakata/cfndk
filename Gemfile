@@ -1,4 +1,12 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in xpub.gemspec
 gemspec
+
+group :development, :test do
+  gem 'rake'
+  # Code Coverage
+  gem 'simplecov'
+  # Test api
+  gem 'rspec'
+  gem 'aruba'
+end

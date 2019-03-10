@@ -3,7 +3,6 @@ module CFnDK
     def initialize(data, option, credentials)
       @option = option
       @credentials = credentials
-      @logger = CFnDK::Logger.new(option)
 
       prepare_stack(data)
       prepare_sequence
@@ -74,26 +73,10 @@ module CFnDK
       end
     end
 
-    def report_stack
+    def report
       @sequence.each do |stacks|
         stacks.each do |name|
-          @stacks[name].report_stack
-        end
-      end
-    end
-
-    def report_stack_resource
-      @sequence.each do |stacks|
-        stacks.each do |name|
-          @stacks[name].report_stack_resource
-        end
-      end
-    end
-
-    def report_event
-      @sequence.each do |stacks|
-        stacks.each do |name|
-          @stacks[name].report_event
+          @stacks[name].report
         end
       end
     end
@@ -102,6 +85,7 @@ module CFnDK
 
     def prepare_stack(data)
       @stacks = {}
+      return unless data['stacks'].is_a?(Hash)
       data['stacks'].each do |name, properties|
         @stacks[name] = Stack.new(name, properties, @option, @credentials)
       end
@@ -117,7 +101,7 @@ module CFnDK
             names_of_processed_stack.include? depend_name
           end
         end
-        raise 'There are cyclic dependency or stack is not exit. unprocessed_stack: ' + names_of_upprocessed_stack.join(',') if names.empty?
+        raise "There are cyclic dependency or stack doesn't exist. unprocessed_stack: " + names_of_upprocessed_stack.join(',') if names.empty?
         names_of_processed_stack += names
         names_of_upprocessed_stack -= names
         @sequence.push names

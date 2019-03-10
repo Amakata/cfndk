@@ -1,136 +1,300 @@
 module CFnDK
-  class Command
-    def initialize
-      @cur_dir = Dir.getwd
-      @option = {
-        config_path: "#{@cur_dir}/cfndk.yml",
-        uuid: ENV['CFNDK_UUID'] || nil,
-        properties: {},
-        stack_names: nil,
-        force: false,
-      }
-
-      @opt = OptionParser.new do |o|
-        o.version = CFnDK::VERSION
-        o.summary_indent = ' ' * 4
-        o.banner = "Version: #{CFnDK::VERSION} \nUsage: cfndk [cmd] [options]"
-        o.on_head('[cmd]',
-                  '    init                  create config YAML file',
-                  '    create                create stacks',
-                  '    update                update stacks',
-                  '    create-or-changeset   create stacks or create changeset',
-                  '    destroy               destroy stacks',
-                  '    generate-uuid         generate UUID',
-                  '    report-event          report stack event',
-                  '    report-stack          report stack',
-                  '    report-stack-resource report stack resource',
-                  '[enviroment variables]',
-                  "    AWS_PROFILE: #{ENV['AWS_PROFILE']}",
-                  "    AWS_DEFAULT_REGION: #{ENV['AWS_DEFAULT_REGION']}",
-                  "    AWS_REGION: #{ENV['AWS_REGION']}",
-                  "    AWS_ACCESS_KEY_ID: #{ENV['AWS_ACCESS_KEY_ID']}",
-                  "    AWS_SECRET_ACCESS_KEY: #{ENV['AWS_SECRET_ACCESS_KEY']}",
-                  "    AWS_SESSION_TOKEN: #{ENV['AWS_SECRET_ACCESS_KEY']}",
-                  "    AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: #{ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']}",
-                  '[options]')
-        o.on('-v', '--verbose', 'verbose mode') { |v| @option[:v] = v }
-        o.on('-c', '--config_path cfndi.yml', "config path (default: #{@option[:config_path]})") { |v| @option[:config_path] = v }
-        o.on('-p', '--properties name=value', 'properties') do |v|
-          md = v.match(/^([a-zA-Z_]+[a-zA-Z0-9_]*)=(.*)$/)
-          if md
-            @option[:properties][md[0]] = md[1]
-          else
-            raise "invalid properties: '#{v}'" unless md
-          end
-        end
-        o.on('-a', '--auto-uuid') { @option[:uuid] = SecureRandom.uuid }
-        o.on('-u', '--uuid uuid') { |v| @option[:uuid] = v }
-        o.on('-n', '--stack-names name1,name2') { |v| @option[:stack_names] = v.split(/\s*,\s*/) }
-        o.on('--no-color') { |b| Rainbow.enabled = false }
-        o.on('-f', '--force') { |b| @option[:force] = true }
-        o.permute!(ARGV)
+  module SubcommandHelpReternable
+    module ClassMethods
+      def subcommand_help(cmd)
+        desc 'help [COMMAND]', 'Describe subcommands or one specific subcommand'
+        class_eval "
+          def help(command = nil, subcommand = true); super; return 2; end
+  "
       end
-      @logger = CFnDK::Logger.new(@option)
+    end
+    extend ClassMethods
+    def self.included(klass)
+      klass.extend ClassMethods
+    end
+  end
+
+  module ConfigFileLoadable
+    private
+
+    def load_config_data(options)
+      raise "File does not exist. #{options[:config_path]}" unless File.file?(options[:config_path])
+      data = open(options[:config_path], 'r') { |f| YAML.load(f) }
+      return data if data
+      CFnDK.logger.error "File is empty. #{options[:config_path]}".color(:red)
+      nil
+    end
+  end
+
+  class KeyPairCommand < Thor
+    include SubcommandHelpReternable
+    include ConfigFileLoadable
+    class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
+    class_option :color, type: :boolean, default: true, desc: 'Use colored output'
+    class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    class_option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    class_option :keypair_names, type: :array, desc: 'Target keypair names'
+
+    desc 'create', 'Create keypair'
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    def create
+      CFnDK.logger.info 'create...'.color(:green)
+      data = load_config_data(options)
+
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      keypairs = CFnDK::KeyPairs.new(data, options, credentials)
+      keypairs.create
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
     end
 
-    def execute
-      if ARGV.length != 1
-        puts @opt.help
-        return 2
-      elsif ARGV[0] == 'generate-uuid'
-        puts SecureRandom.uuid
-        return 0
-      elsif ARGV[0] == 'init'
-        if File.file?(@option[:config_path])
-          @logger.error "File exist. #{@option[:config_path]}".color(:red)
-          return 1
-        end
-        @logger.info 'init...'.color(:green)
-        FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../../skel/*'), './')
-        @logger.info "create #{@option[:config_path]}".color(:green)
-        return 0
-      end
+    desc 'destroy', 'Destroy keypair'
+    option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
+    def destroy
+      CFnDK.logger.info 'destroy...'.color(:green)
+      data = load_config_data(options)
 
-      unless File.file?(@option[:config_path])
-        @logger.error "File does not exist. #{@option[:config_path]}".color(:red)
-        return 1
-      end
-
-      data = open(@option[:config_path], 'r') { |f| YAML.load(f) } if File.file?(@option[:config_path])
       credentials = CFnDK::CredentialProviderChain.new.resolve
-      stacks = CFnDK::Stacks.new(data, @option, credentials)
-      keypairs = CFnDK::KeyPairs.new(data, @option, credentials)
+      keypairs = CFnDK::KeyPairs.new(data, options, credentials)
 
-      if ARGV[0] == 'create'
-        @logger.info 'create...'.color(:green)
-        stacks.validate
-        keypairs.create
-        stacks.create
-      elsif ARGV[0] == 'update'
-        @logger.info 'update...'.color(:green)
-        stacks.validate
-        stacks.update
-      elsif ARGV[0] == 'create-or-changeset'
-        @logger.info 'create or changeset...'.color(:green)
-        stacks.validate
-        stacks.create_or_changeset
-      elsif ARGV[0] == 'destroy'
-        @logger.info 'destroy...'.color(:green)
-        if destroy?
-          stacks.destroy
-          keypairs.destroy
-        end
-      elsif ARGV[0] == 'validate'
-        @logger.info 'validate...'.color(:green)
-        stacks.validate
-      elsif ARGV[0] == 'report-event'
-        @logger.info 'report event...'.color(:green)
-        stacks.report_event
-      elsif ARGV[0] == 'report-stack'
-        @logger.info 'report stack...'.color(:green)
-        stacks.report_stack
-      elsif ARGV[0] == 'report-stack-resource'
-        @logger.info 'report stack resource...'.color(:green)
-        stacks.report_stack_resource
+      if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)
+        keypairs.destroy
+        return 0
       else
-        puts @opt.help
+        CFnDK.logger.info 'destroy command was canceled'.color(:green)
         return 2
       end
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+  end
+
+  class StackCommand < Thor
+    include SubcommandHelpReternable
+    include ConfigFileLoadable
+
+    class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
+    class_option :color, type: :boolean, default: true, desc: 'Use colored output'
+    class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    class_option :stack_names, type: :array, desc: 'Target stack names'
+
+    desc 'create', 'Create stack'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    def create
+      CFnDK.logger.info 'create...'.color(:green)
+      data = load_config_data(options)
+
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.validate
+      stacks.create
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    desc 'update', 'Update stack'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    def update
+      CFnDK.logger.info 'update...'.color(:green)
+      data = load_config_data(options)
+
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.validate
+      stacks.update
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    desc 'destroy', 'Destroy stack'
+    option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    def destroy
+      CFnDK.logger.info 'destroy...'.color(:green)
+      data = load_config_data(options)
+
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+
+      if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)
+        stacks.destroy
+        return 0
+      else
+        CFnDK.logger.info 'destroy command was canceled'.color(:green)
+        return 2
+      end
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    desc 'validate', 'Validate stack'
+    def validate
+      CFnDK.logger.info 'validate...'.color(:green)
+      data = load_config_data(options)
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.validate
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    desc 'report', 'Report stack'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    def report
+      CFnDK.logger.info 'report...'.color(:green)
+      data = load_config_data(options)
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.report
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+  end
+
+  class Command < Thor
+    include Thor::Actions
+    include ConfigFileLoadable
+    class << self
+      def exit_on_failure?
+        true
+      end
+    end
+
+    def help(command = nil, subcommand = false)
+      super(command, subcommand)
+      2
+    end
+
+    class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
+    class_option :color, type: :boolean, default: true, desc: 'Use colored output'
+
+    desc 'generate-uuid', 'Print UUID'
+    def generate_uuid
+      puts SecureRandom.uuid
       0
     end
 
-    def destroy?
-      return true if @option[:force]
-      loop do
-        print 'destroy? [yes|no]:'
-        res = STDIN.gets
-        case res
-        when /^yes/
-          return true
-        when /^no/, /^$/
-          return false
-        end
+    desc 'version', 'Print version'
+    def version
+      puts CFnDK::VERSION
+      0
+    end
+
+    desc 'init', 'Craete sample cfndk.yml & CloudFormation yaml & json files.'
+    def init
+      config_path = "#{Dir.getwd}/cfndk.yml"
+      if File.file?(config_path)
+        CFnDK.logger.error "File exist. #{config_path}".color(:red)
+        return 1
+      end
+      CFnDK.logger.info 'init...'.color(:green)
+      FileUtils.cp_r(Dir.glob(File.dirname(__FILE__) + '/../../skel/*'), './')
+      CFnDK.logger.info "create #{config_path}".color(:green)
+    end
+
+    desc 'create', 'Create keypair & stack'
+    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    option :stack_names, type: :array, desc: 'Target stack names'
+    option :keypair_names, type: :array, desc: 'Target keypair names'
+    def create
+      CFnDK.logger.info 'create...'.color(:green)
+      data = load_config_data(options)
+
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+      keypairs = CFnDK::KeyPairs.new(data, options, credentials)
+
+      stacks.validate
+      keypairs.create
+      stacks.create
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    desc 'destroy', 'Destroy keypair & stack'
+    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :stack_names, type: :array, desc: 'Target stack names'
+    option :keypair_names, type: :array, desc: 'Target keypair names'
+    def destroy
+      CFnDK.logger.info 'destroy...'.color(:green)
+      data = load_config_data(options)
+
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+      keypairs = CFnDK::KeyPairs.new(data, options, credentials)
+
+      if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)
+        stacks.destroy
+        keypairs.destroy
+        return 0
+      else
+        CFnDK.logger.info 'destroy command was canceled'.color(:green)
+        return 2
+      end
+    rescue => e
+      CFnDK.logger.error "(#{e.class}) #{e.message}".color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    desc 'report', 'Report stack'
+    option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
+    option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :stack_names, type: :array, desc: 'Target stack names'
+    def report
+      CFnDK.logger.info 'report...'.color(:green)
+
+      data = load_config_data(options)
+
+      credentials = CFnDK::CredentialProviderChain.new.resolve
+      stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.report
+      return 0
+    rescue => e
+      CFnDK.logger.error e.message.color(:red)
+      CFnDK.logger.debug e.backtrace
+      return 1
+    end
+
+    no_commands do
+      def invoke_command(command, *args)
+        CFnDK.logger = CFnDKLogger.new(options)
+        Rainbow.enabled = false unless options[:color]
+        super
       end
     end
+
+    desc 'keypair SUBCOMMAND ...ARGS', 'Manage keypair'
+    subcommand 'keypair', KeyPairCommand
+    desc 'stack SUBCOMMAND ...ARGS', 'Manage stack'
+    subcommand 'stack', StackCommand
   end
 end

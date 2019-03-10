@@ -11,16 +11,15 @@ module CFnDK
       @override_parameters = data['parameters'] || {}
       @option = option
       @client = Aws::CloudFormation::Client.new(credentials: credentials)
-      @logger = CFnDK::Logger.new(option)
     end
 
     def create
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('creating stack: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
-      @logger.debug('Parametres  :' + parameters.inspect)
-      @logger.debug('Capabilities:' + capabilities.inspect)
-      @logger.debug('Timeout     :' + timeout_in_minutes.to_s)
+      CFnDK.logger.info(('creating stack: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + name)
+      CFnDK.logger.debug('Parametres  :' + parameters.inspect)
+      CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
+      CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
       @client.create_stack(
         stack_name: name,
         template_body: template_body,
@@ -37,9 +36,9 @@ module CFnDK
           :stack_create_complete,
           stack_name: name
         )
-        @logger.info(('created stack: ' + @name).color(:green))
+        CFnDK.logger.info(('created stack: ' + name).color(:green))
       rescue Aws::Waiters::Errors::FailureStateError => ex
-        @logger.error ex.message
+        CFnDK.logger.error ex.message
         report_event
         raise ex
       end
@@ -47,11 +46,11 @@ module CFnDK
 
     def update
       return false if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('updating stack: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
-      @logger.debug('Parametres  :' + parameters.inspect)
-      @logger.debug('Capabilities:' + capabilities.inspect)
-      @logger.debug('Timeout     :' + timeout_in_minutes.to_s)
+      CFnDK.logger.info(('updating stack: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + name)
+      CFnDK.logger.debug('Parametres  :' + parameters.inspect)
+      CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
+      CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
       begin
         @client.update_stack(
           stack_name: name,
@@ -61,8 +60,13 @@ module CFnDK
         )
         true
       rescue Aws::CloudFormation::Errors::ValidationError => ex
-        @logger.error ex.message.color(:red)
-        false
+        case ex.message
+        when 'No updates are to be performed.'
+          CFnDK.logger.warn "#{ex.message}: #{name}".color(:red)
+          false
+        else
+          raise  ex
+        end
       end
     end
 
@@ -72,33 +76,38 @@ module CFnDK
         :stack_update_complete,
         stack_name: name
       )
-      @logger.info(('updated stack: ' + @name).color(:green))
+      CFnDK.logger.info(('updated stack: ' + name).color(:green))
     end
 
     def destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('deleting stack: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
-      @client.delete_stack(
-        stack_name: name
-      )
+      if exits?
+        CFnDK.logger.info(('deleting stack: ' + name).color(:green))
+        CFnDK.logger.debug('Name        :' + name)
+        @client.delete_stack(
+          stack_name: name
+        )
+      else
+        CFnDK.logger.info(('do not delete stack: ' + name).color(:red))
+      end
     end
 
     def wait_until_destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless exits?
       @client.wait_until(
         :stack_delete_complete,
         stack_name: name
       )
-      @logger.info(('deleted stack: ' + @name).color(:green))
+      CFnDK.logger.info(('deleted stack: ' + name).color(:green))
     end
 
     def create_change_set
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('creating change set: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
-      @logger.debug('Parametres  :' + parameters.inspect)
-      @logger.debug('Capabilities:' + capabilities.inspect)
+      CFnDK.logger.info(('creating change set: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + name)
+      CFnDK.logger.debug('Parametres  :' + parameters.inspect)
+      CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
       @client.create_change_set(
         stack_name: name,
         template_body: template_body,
@@ -116,31 +125,31 @@ module CFnDK
           stack_name: name,
           change_set_name: name
         )
-        @logger.info(('created chnage set: ' + name).color(:green))
+        CFnDK.logger.info(('created chnage set: ' + name).color(:green))
       rescue Aws::Waiters::Errors::FailureStateError => ex
         resp = @client.describe_change_set(
           change_set_name: name,
           stack_name: name
         )
         if resp.status_reason != "The submitted information didn't contain changes. Submit different information to create a change set."
-          @logger.error ex.message.color(:red)
+          CFnDK.logger.error ex.message.color(:red)
           raise ex
         else
-          @logger.error(('failed create change set: ' + name).color(:red))
-          @logger.error resp.status_reason
+          CFnDK.logger.error(('failed create change set: ' + name).color(:red))
+          CFnDK.logger.error resp.status_reason
           @client.delete_change_set(
             change_set_name: name,
             stack_name: name
           )
-          @logger.info(('deleted change set: ' + name).color(:red))
+          CFnDK.logger.info(('deleted change set: ' + name).color(:red))
         end
       end
     end
 
     def validate
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('validate stack: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
+      CFnDK.logger.info(('validate stack: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + @name)
       @client.validate_template(
         template_body: template_body
       )
@@ -155,10 +164,16 @@ module CFnDK
       false
     end
 
+    def report
+      report_stack
+      report_stack_resource
+      report_event
+    end
+
     def report_stack
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('stack: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
+      CFnDK.logger.info(('stack: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + name)
       begin
         rows = @client.describe_stacks(
           stack_name: name
@@ -171,16 +186,16 @@ module CFnDK
             item.stack_status_reason]
         end
         table = Terminal::Table.new headings: %w(Name Creation Deletion Status Reason), rows: rows
-        @logger.info table
+        CFnDK.logger.info table
       rescue Aws::CloudFormation::Errors::ValidationError => ex
-        @logger.warn ex.message
+        CFnDK.logger.warn ex.message
       end
     end
 
     def report_event
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('stack: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
+      CFnDK.logger.info(('stack: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + name)
       begin
         rows = @client.describe_stack_events(
           stack_name: name
@@ -192,16 +207,16 @@ module CFnDK
             item.resource_status_reason]
         end
         table = Terminal::Table.new headings: %w(Type Time Status Reason), rows: rows
-        @logger.info table
+        CFnDK.logger.info table
       rescue Aws::CloudFormation::Errors::ValidationError => ex
-        @logger.warn ex.message
+        CFnDK.logger.warn ex.message
       end
     end
 
     def report_stack_resource
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      @logger.info(('stack: ' + @name).color(:green))
-      @logger.debug('Name        :' + name)
+      CFnDK.logger.info(('stack: ' + name).color(:green))
+      CFnDK.logger.debug('Name        :' + name)
       begin
         rows = @client.describe_stack_resources(
           stack_name: name
@@ -217,9 +232,9 @@ module CFnDK
           ]
         end
         table = Terminal::Table.new headings: %w(L-name P-name Type Timestamp Status Reason Desc), rows: rows
-        @logger.info table
+        CFnDK.logger.info table
       rescue Aws::CloudFormation::Errors::ValidationError => ex
-        @logger.warn ex.message
+        CFnDK.logger.warn ex.message
       end
     end
 

@@ -6,8 +6,8 @@ This is easy operation/integration support tool for AWS CloudFormation.
 
 kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプレートを書かずにDSLで表現するツールには様々な物があります。
 しかし、これらのツールはサードパーティツールであるため、CloudFormationの対応への追従に不安がのこります。
-本ツールは、標準のCloudFromationテンプレートの枠組みを変えずに、その利用を支援するツールとなっています。
-最悪このツールが使えなくなっても僅かなコストで標準のAWS CLIを使ってオペレーションを続行することが可能です。
+本ツールは、標準のCloudFromationテンプレートの枠組みを変えずに、その利用を支援するツールをを目指しています。
+最悪の場合、このツールが使えなくなっても僅かなコストで標準のAWS CLIを使いオペレーションを続行することが可能です
 
 ## ハイライト
 
@@ -15,6 +15,7 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 * 複数のスタックの依存関係を考慮した操作
 * CloudFormationでバージョンコントロールシステムと連動した継続的インテグレーションのための基盤対応
 * Keypairの作成/削除
+* コマンド、サブコマンド、冪統性を考慮したコマンドライン体系、オプションの整理、ヘルプの追加
 
 ## インストール
 
@@ -31,7 +32,7 @@ $ cfndk init
 $ export AWS_REGION=ap-northeast-1
 $ export AWS_PROFILE=default
 $ cfndk create
-$ cfndk report-event
+$ cfndk report
 $ cfndk destroy -f
 ```
 
@@ -52,55 +53,30 @@ $ cfndk destroy -f
 
 ## コマンド
 
-```
-cfndk [cmd] [options]
-```
+### ```init```
 
-### [cmd]
-
-#### ```init```
-
-カレントディレクトリにcfndk.yamlのひな形を作成します。
+カレントディレクトリにcfndk.ymlのひな形を作成します。
 
 ```
-cfndk init [option]
+cfndk init
 ```
 
-#### ```create```
+### ```create```
 
-cfndk.yamlで定義されているスタックを作成します。
+cfndk.ymlで定義されているスタックを作成します。
 
-```
-cfndk create [option]
-```
+```cfndk create [option]```
 
-#### ```update```
 
-cfndk.yamlで定義されているスタックを更新します。
+### ```destroy```
 
-```
-cfndk update [option]
-```
-
-#### ```create-or-changeset```
-
-cfndk.yamlで定義されているスタックが存在しない場合は作成を、存在する場合はチェンジセットを作成します。
-チェンジセットの実行は行いません。
-コマンドを実行後に手動で実行する必要があります。
-
-```
-cfndk create-or-changeset [option]
-```
-
-#### ```destroy```
-
-cfndk.yamlで定義されているスタックを削除します。
+cfndk.ymlで定義されているスタックを削除します。
 
 ```
 cfndk destroy [option]
 ```
 
-#### ```generate-uuid```
+### ```generate-uuid```
 
 UUIDを生成して標準出力に出力します。
 
@@ -117,32 +93,12 @@ cfndk destroy
 unset CFNDK_UUID
 ```
 
-#### ```validate```
+### ```report```
 
-cfndk.yamlで定義されているスタックのテンプレートをvalidationします。
-
-#### ```report-event```
-
-cfndk.yamlで定義されているスタックのイベント情報をレポートします。
+cfndk.ymlで定義されているスタックについてレポートします。
 
 ```
-cfndk report-event [option]
-```
-
-#### ```report-stack```
-
-cfndk.yamlで定義されているスタックの情報をレポートします。
-
-```
-cfndk report-stack [option]
-```
-
-#### ```report-stack-resource```
-
-cfndk.yamlで定義されているスタックのリソース情報をレポートします。
-
-```
-cfndk report-stack-resource [option]
+cfndk report [option]
 ```
 
 ### [option]
@@ -151,32 +107,30 @@ cfndk report-stack-resource [option]
 
 実行時に詳細な情報を表示します。
 
-#### ```-c, --config_path cfndi.yml```
+#### ```-c, --config-path=cfndk.yml```
 
 カレントディレクトリのcfndi.ymlの代わりに、ファイルを指定します。
 
-#### ```-p, --properties name=value```
+#### ```-p, --properties=name:value```
 
 プロパティを追加します。
 cfndi.ymlのparametersのerb内で値で参照することができます。
-
-#### ```-a, --auto-uuid```
-
-UUIDを自動生成し使用します。
-UUIDが指定されるとスタック名に付加されます。
-またcfndi.ymlのparametersの値で参照することができます。
-```-a```と```-u```は最後に指定されたものが有効になります。
 
 ####  ```-u, --uuid uuid```
 
 指定されたUUIDを使用します。
 UUIDが指定されるとスタック名に付加されます。
 またcfndi.ymlのparametersの値で参照することができます。
-```-a```と```-u```は最後に指定されたものが有効になります。
+```-u```は最後に指定されたものが有効になります。
 
-#### ```-s, --stack-names name1,name2```
+#### ```--stack-names=name1 name2```
 
 指定されたスタック名のみを操作します。
+
+#### ```--keypair-names=name1 name2```
+
+指定されたキーペア名のみを操作します。
+
 
 #### ```--no-color```
 
@@ -191,10 +145,10 @@ UUIDが指定されるとスタック名に付加されます。
 ### ```CFNDK_UUID```
 
 この環境変数が指定されている場合、```--uuid $CFNDK_UUID```が指定されたものとして動作します。
-```-a```や```-u```のほうが優先されます。
+```-u```のほうが優先されます。
 
 
-## cfndk.yaml
+## cfndk.yml
 
 * example
 
@@ -280,11 +234,11 @@ UUIDを利用すると、```[Stack Original Name]-[UUID]```のような形式の
 
 #### template_file 
 
-必須。CloudFormationテンプレートファイルのパスをcfndk.yamlからの相対パスで指定します。
+必須。CloudFormationテンプレートファイルのパスをcfndk.ymlからの相対パスで指定します。
 
 #### parameter_input
 
-必須。CloudFormationのパラメータJSONファイルをcfndk.yamlからの相対パスで指定します。
+必須。CloudFormationのパラメータJSONファイルをcfndk.ymlからの相対パスで指定します。
 
 #### parameters
 
@@ -327,7 +281,7 @@ Parameter Valueではerbの記法が利用できます。
 スタックに依存している別のスタックを指定します。
 複数指定することができます。
 dependsを指定すると、create,update,create-or-changeset,destoryのコマンドを実行する際に、依存関係に従ってスタックを処理します。
-dependsが循環するような指定をすることはできません。
+存在しないタスタックやdependsが循環するような指定をすることはできません。
 
 ```
     depends:
@@ -360,3 +314,16 @@ dependsが循環するような指定をすることはできません。
   * ```properties(key)```
 
     オプション```--properties```で指定したキーに対応する値を参照することができます。
+
+
+## テスト
+
+cfndkコマンドのテストを行うことができます。
+CFNDK_COVERAGE環境変数に1を設定することで、カバレッジを取ることができます。
+
+```
+export AWS_REGION=ap-northeast-1
+export AWS_PROFILE=default
+export CFNDK_COVERAGE=1 
+bundle exec rspec
+```
