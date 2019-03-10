@@ -4,7 +4,7 @@
 #
 version: 2
 jobs:
-  build:
+  test:
     docker:
       # specify the version you desire here
       - image: circleci/ruby:2.4.1-node-browsers
@@ -57,3 +57,12 @@ jobs:
       - store_artifacts:
           path: ~/repo/coverage
           destination: test-coverage
+workflows:
+  version: 2
+  my_workflow:
+    jobs:
+      - HOLD-TEST: # ボタン押したら実行。
+          type: approval
+      - test:
+          requires:
+            - HOLD-TEST
