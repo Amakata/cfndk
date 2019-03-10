@@ -99,9 +99,9 @@ workflows:
   version: 2
   my_workflow:
     jobs:
-      - HOLD-TEST: 
+       - HOLD-TEST: 
           type: approval
-      - test:
+       - test:
           requires:
             - HOLD-TEST
        - HOLD-DEPLOY: 
