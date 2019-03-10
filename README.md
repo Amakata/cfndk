@@ -15,6 +15,7 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 * 複数のスタックの依存関係を考慮した操作
 * CloudFormationでバージョンコントロールシステムと連動した継続的インテグレーションのための基盤対応
 * Keypairの作成/削除
+* コマンド、サブコマンド、冪統性を考慮したコマンドライン体系、オプションの整理、ヘルプの追加
 
 ## インストール
 
@@ -52,45 +53,30 @@ $ cfndk destroy -f
 
 ## コマンド
 
-```
-cfndk [cmd] [options]
-```
+### ```init```
 
-### [cmd]
-
-#### ```init```
-
-カレントディレクトリにcfndk.yamlのひな形を作成します。
+カレントディレクトリにcfndk.ymlのひな形を作成します。
 
 ```
-cfndk init [option]
+cfndk init
 ```
 
-#### ```create```
+### ```create```
 
-cfndk.yamlで定義されているスタックを作成します。
+cfndk.ymlで定義されているスタックを作成します。
 
-```
-cfndk create [option]
-```
+```cfndk create [option]```
 
-#### ```update```
 
-cfndk.yamlで定義されているスタックを更新します。
+### ```destroy```
 
-```
-cfndk update [option]
-```
-
-#### ```destroy```
-
-cfndk.yamlで定義されているスタックを削除します。
+cfndk.ymlで定義されているスタックを削除します。
 
 ```
 cfndk destroy [option]
 ```
 
-#### ```generate-uuid```
+### ```generate-uuid```
 
 UUIDを生成して標準出力に出力します。
 
@@ -107,13 +93,9 @@ cfndk destroy
 unset CFNDK_UUID
 ```
 
-#### ```validate```
+### ```report```
 
-cfndk.yamlで定義されているスタックのテンプレートをvalidationします。
-
-#### ```report```
-
-cfndk.yamlで定義されているスタックについてレポートします。
+cfndk.ymlで定義されているスタックについてレポートします。
 
 ```
 cfndk report [option]
@@ -166,7 +148,7 @@ UUIDが指定されるとスタック名に付加されます。
 ```-u```のほうが優先されます。
 
 
-## cfndk.yaml
+## cfndk.yml
 
 * example
 
@@ -252,11 +234,11 @@ UUIDを利用すると、```[Stack Original Name]-[UUID]```のような形式の
 
 #### template_file 
 
-必須。CloudFormationテンプレートファイルのパスをcfndk.yamlからの相対パスで指定します。
+必須。CloudFormationテンプレートファイルのパスをcfndk.ymlからの相対パスで指定します。
 
 #### parameter_input
 
-必須。CloudFormationのパラメータJSONファイルをcfndk.yamlからの相対パスで指定します。
+必須。CloudFormationのパラメータJSONファイルをcfndk.ymlからの相対パスで指定します。
 
 #### parameters
 
@@ -299,7 +281,7 @@ Parameter Valueではerbの記法が利用できます。
 スタックに依存している別のスタックを指定します。
 複数指定することができます。
 dependsを指定すると、create,update,create-or-changeset,destoryのコマンドを実行する際に、依存関係に従ってスタックを処理します。
-dependsが循環するような指定をすることはできません。
+存在しないタスタックやdependsが循環するような指定をすることはできません。
 
 ```
     depends:
