@@ -45,7 +45,7 @@ jobs:
               --format progress \
               --out /tmp/test-results/rspec.xml \
               --format progress
-
+              
       # collect reports
       - store_test_results:
           path: /tmp/test-results
@@ -53,7 +53,7 @@ jobs:
           path: /tmp/test-results
           destination: test-results
       - store_test_results:
-          path: ~/repo/spec/coverage
+          path: ~/repo/coverage
       - store_artifacts:
-          path: ~/repo/spec/coverage
+          path: ~/repo/coverage
           destination: test-coverage
