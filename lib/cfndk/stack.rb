@@ -60,8 +60,13 @@ module CFnDK
         )
         true
       rescue Aws::CloudFormation::Errors::ValidationError => ex
-        CFnDK.logger.error ex.message.color(:red)
-        false
+        case ex.message
+        when 'No updates are to be performed.'
+          CFnDK.logger.warn "#{ex.message}: #{name}".color(:red)
+          false
+        else
+          raise  ex
+        end
       end
     end
 
