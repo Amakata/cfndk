@@ -4,7 +4,7 @@
 #
 version: 2
 jobs:
-  test:
+  build:
     docker:
       # specify the version you desire here
       - image: circleci/ruby:2.4.1-node-browsers
@@ -64,6 +64,6 @@ workflows:
     jobs:
       - HOLD-TEST: 
         type: approval
-      - test:
+      - build:
         requires:
           - HOLD-TEST
