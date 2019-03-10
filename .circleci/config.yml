@@ -104,12 +104,13 @@ workflows:
       - test:
         requires:
           - HOLD-TEST
-      - HOLD-DEPLOY: 
+      - HOLD-DEPLOY:
         type: approval
         requires:
           - test
         filters:
-          only: master
+          branches:
+            only: master
       - deploy:
         requires:
           - HOLD-DEPLOY
