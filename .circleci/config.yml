@@ -57,12 +57,60 @@ jobs:
       - store_artifacts:
           path: ~/repo/coverage
           destination: test-coverage
+  deploy:
+    docker:
+      # specify the version you desire here
+      - image: circleci/ruby:2.4.1-node-browsers
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
+    parallelism: 1
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "Gemfile.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            bundle install --jobs=4 --retry=3 --path vendor/bundle
+
+      - save_cache:
+          paths:
+            - ./vendor/bundle
+          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+
+      # run relase
+      - run:
+          name: deploy
+          command: |
+            bundle exec rake release
+
 workflows:
   version: 2
   my_workflow:
     jobs:
-      - HOLD-TEST: # ボタン押したら実行。
+      - HOLD-TEST: 
           type: approval
       - test:
           requires:
             - HOLD-TEST
+       - HOLD-DEPLOY: 
+          type: approval
+          requires:
+            - test
+          filters:
+            only: master
+      - deploy:
+          requires:
+            - HOLD-DEPLOY
+     
