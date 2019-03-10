@@ -99,18 +99,17 @@ workflows:
   version: 2
   my_workflow:
     jobs:
-       - HOLD-TEST: 
-          type: approval
-       - test:
-          requires:
-            - HOLD-TEST
-       - HOLD-DEPLOY: 
-          type: approval
-          requires:
-            - test
-          filters:
-            only: master
+      - HOLD-TEST: 
+        type: approval
+      - test:
+        requires:
+          - HOLD-TEST
+      - HOLD-DEPLOY: 
+        type: approval
+        requires:
+          - test
+        filters:
+          only: master
       - deploy:
-          requires:
-            - HOLD-DEPLOY
-     
+        requires:
+          - HOLD-DEPLOY
