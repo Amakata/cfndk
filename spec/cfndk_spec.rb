@@ -76,6 +76,11 @@ RSpec.describe 'CFnDK', type: :aruba do
           aggregate_failures do
             expect(last_command_started).to be_successfully_executed
             expect(last_command_started).to have_output(/INFO init\.\.\..+INFO create .+cfndk.yml$/m)
+            expect('cfndk.yml').to be_an_existing_file
+            expect('web/web.yaml').to be_an_existing_file
+            expect('web/prod.json').to be_an_existing_file
+            expect('network/network.yaml').to be_an_existing_file
+            expect('web/prod.json').to be_an_existing_file
           end
         end
       end
@@ -87,6 +92,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           aggregate_failures do
             expect(last_command_started).to have_exit_status(1)
             expect(last_command_started).to have_output(/ERROR File exist./)
+            expect('web/web.yaml').to_not be_an_existing_file
           end
         end
       end
