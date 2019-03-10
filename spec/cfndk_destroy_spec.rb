@@ -107,7 +107,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-          context 'when keyparis and stacks exist' do
+          context 'when keyparis and stacks exist', aaa: true do
             yaml = <<-"YAML"
             keypairs:
               Test1:
@@ -127,13 +127,14 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { run_command('cfndk destroy') }
             before(:each) { type('yes') }
             before(:each) { stop_all_commands }
-            it 'displays confirm message and delete message' do
+            it 'displays confirm message and delete message and stack was deleted' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
                 expect(last_command_started).to have_output(/INFO destroy../)
                 expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
                 expect(last_command_started).to have_output(/INFO deleted keypair: Test1$/)
                 expect(last_command_started).to have_output(/INFO deleted stack: Test$/)
+                expect{cloudformation_stack('Test').exist}.to raise_error(Aws::CloudFormation::Errors::ValidationError)
               end
             end
             after(:each) { run_command('cfndk destroy -f') }
