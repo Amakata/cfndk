@@ -268,12 +268,17 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
             before(:each) { copy('%/vpc.json', 'vpc.json') }
             before(:each) { run_command('cfndk create') }
-            it do
+            it 'displays created log and stack exist' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
                 expect(last_command_started).to have_output(/INFO validate stack: Test$/)
                 expect(last_command_started).to have_output(/INFO creating stack: Test$/)
                 expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                expect(cloudformation_stack('Test')).to exist
+                expect(cloudformation_stack('Test').stack_name).to eq('Test')
+                expect(cloudformation_stack('Test').stack_status).to eq('CREATE_COMPLETE')
+                expect(cloudformation_stack('Test').timeout_in_minutes).to eq(2)
+                expect(cloudformation_stack('Test').parameters[0].parameter_value).to eq('sample')
               end
             end
             after(:each) { run_command('cfndk destroy -f') }

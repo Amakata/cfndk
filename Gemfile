@@ -9,4 +9,5 @@ group :development, :test do
   # Test api
   gem 'rspec'
   gem 'aruba'
+  gem 'awspec'
 end
