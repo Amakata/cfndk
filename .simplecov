@@ -1,4 +1,4 @@
-SimpleCov.merge_timeout 3600
+SimpleCov.merge_timeout 7200
 SimpleCov.command_name "rspec_#{Process.pid.to_s}"
 
 SimpleCov.start do
