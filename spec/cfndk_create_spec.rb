@@ -177,23 +177,6 @@ RSpec.describe 'CFnDK', type: :aruba do
                 end
                 after(:each) { run_command("cfndk destroy -u=#{uuid} -f") }
               end
-
-              context 'when env CFNDK_UUID=38437346-c75c-47c5-83b4-d504f85e275b' do
-                before(:each) { set_environment_variable('CFNDK_UUID', uuid) }
-                before(:each) { run_command('cfndk create') }
-                it 'runs the command with the expected results' do
-                  aggregate_failures do
-                    expect(last_command_started).to be_successfully_executed
-                    expect(last_command_started).to have_output(/INFO create.../)
-                    expect(last_command_started).to have_output(/INFO creating keypair: Test-#{uuid}/)
-                    expect(last_command_started).to have_output(/INFO created keypair: Test-#{uuid}/)
-                    expect(last_command_started).to have_output(/create key file: test-#{uuid}.pem/)
-                    expect("test-#{uuid}.pem").to be_an_existing_file
-                    expect("test-#{uuid}.pem").to have_file_content(/-----END RSA PRIVATE KEY-----/)
-                  end
-                end
-                after(:each) { run_command('cfndk destroy -f') }
-              end
             end
           end
           context 'with keypairs' do
@@ -204,41 +187,39 @@ RSpec.describe 'CFnDK', type: :aruba do
               Test3:
             YAML
             before(:each) { write_file(file, yaml) }
-            context 'when --keypair-names=Test1 Test3' do
-              context 'without UUID' do
-                before(:each) { run_command('cfndk create --keypair-names=Test1 Test3') }
+            context 'without UUID' do
+              before(:each) { run_command('cfndk create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO create.../)
+                  expect(last_command_started).to have_output(/INFO creating keypair: Test1/)
+                  expect(last_command_started).to have_output(/INFO created keypair: Test1/)
+                  expect(last_command_started).o have_output(/INFO creating keypair: Test2/)
+                  expect(last_command_started).to have_output(/INFO created keypair: Test2/)
+                  expect(last_command_started).to have_output(/INFO creating keypair: Test3/)
+                  expect(last_command_started).to have_output(/INFO created keypair: Test3/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with UUID' do
+              context 'when env CFNDK_UUID=38437346-c75c-47c5-83b4-d504f85e275b' do
+                before(:each) { set_environment_variable('CFNDK_UUID', uuid) }
+                before(:each) { run_command('cfndk create') }
                 it do
                   aggregate_failures do
                     expect(last_command_started).to be_successfully_executed
                     expect(last_command_started).to have_output(/INFO create.../)
-                    expect(last_command_started).to have_output(/INFO creating keypair: Test1/)
-                    expect(last_command_started).to have_output(/INFO created keypair: Test1/)
-                    expect(last_command_started).not_to have_output(/INFO creating keypair: Test2/)
-                    expect(last_command_started).not_to have_output(/INFO created keypair: Test2/)
-                    expect(last_command_started).to have_output(/INFO creating keypair: Test3/)
-                    expect(last_command_started).to have_output(/INFO created keypair: Test3/)
+                    expect(last_command_started).to have_output(/INFO creating keypair: Test1-#{uuid}/)
+                    expect(last_command_started).to have_output(/INFO created keypair: Test1-#{uuid}/)
+                    expect(last_command_started).to have_output(/INFO creating keypair: Test2-#{uuid}/)
+                    expect(last_command_started).to have_output(/INFO created keypair: Test2-#{uuid}/)
+                    expect(last_command_started).to have_output(/INFO creating keypair: Test3-#{uuid}/)
+                    expect(last_command_started).to have_output(/INFO created keypair: Test3-#{uuid}/)
                   end
                 end
                 after(:each) { run_command('cfndk destroy -f') }
-              end
-              context 'with UUID' do
-                context 'when env CFNDK_UUID=38437346-c75c-47c5-83b4-d504f85e275b' do
-                  before(:each) { set_environment_variable('CFNDK_UUID', uuid) }
-                  before(:each) { run_command('cfndk create --keypair-names=Test1 Test3') }
-                  it do
-                    aggregate_failures do
-                      expect(last_command_started).to be_successfully_executed
-                      expect(last_command_started).to have_output(/INFO create.../)
-                      expect(last_command_started).to have_output(/INFO creating keypair: Test1-#{uuid}/)
-                      expect(last_command_started).to have_output(/INFO created keypair: Test1-#{uuid}/)
-                      expect(last_command_started).not_to have_output(/INFO creating keypair: Test2-#{uuid}/)
-                      expect(last_command_started).not_to have_output(/INFO created keypair: Test2-#{uuid}/)
-                      expect(last_command_started).to have_output(/INFO creating keypair: Test3-#{uuid}/)
-                      expect(last_command_started).to have_output(/INFO created keypair: Test3-#{uuid}/)
-                    end
-                  end
-                  after(:each) { run_command('cfndk destroy -f') }
-                end
               end
             end
           end
@@ -489,93 +470,6 @@ RSpec.describe 'CFnDK', type: :aruba do
                     expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
                     expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
                     expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
-                  end
-                end
-                after(:each) { run_command('cfndk destroy -f') }
-              end
-              context 'when --stack-names=Test' do
-                yaml = <<-"YAML"
-                stacks:
-                  Test:
-                    template_file: vpc.yaml
-                    parameter_input: vpc.json
-                    parameters:
-                      VpcName: sample<%= append_uuid%>
-                    timeout_in_minutes: 2
-                  Test2:
-                    template_file: sg.yaml
-                    parameter_input: sg.json
-                    parameters:
-                      VpcName: sample<%= append_uuid%>
-                    depends:
-                      - Test
-                YAML
-                before(:each) { write_file(file, yaml) }
-                before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
-                before(:each) { copy('%/vpc.json', 'vpc.json') }
-                before(:each) { copy('%/sg.yaml', 'sg.yaml') }
-                before(:each) { copy('%/sg.json', 'sg.json') }
-                before(:each) { run_command('cfndk create --stack-names=Test') }
-                it do
-                  aggregate_failures do
-                    expect(last_command_started).to be_successfully_executed
-                    expect(last_command_started).to have_output(/INFO create.../)
-                    expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
-                    expect(last_command_started).not_to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                    expect(last_command_started).not_to have_output(/INFO creating stack: Test2-#{uuid}$/)
-                    expect(last_command_started).not_to have_output(/INFO created stack: Test2-#{uuid}$/)
-                  end
-                end
-                after(:each) { run_command('cfndk destroy -f') }
-              end
-              context 'when --stack-names=Test Test2' do
-                yaml = <<-"YAML"
-                stacks:
-                  Test:
-                    template_file: vpc.yaml
-                    parameter_input: vpc.json
-                    parameters:
-                      VpcName: sample<%= append_uuid%>
-                    timeout_in_minutes: 2
-                  Test2:
-                    template_file: sg.yaml
-                    parameter_input: sg.json
-                    parameters:
-                      VpcName: sample<%= append_uuid%>
-                    depends:
-                      - Test
-                  Test3:
-                    template_file: iam.yaml
-                    parameter_input: iam.json
-                    parameters:
-                      WebRoleName: WebhRole<%= append_uuid%>
-                    capabilities:
-                      - CAPABILITY_NAMED_IAM
-                    timeout_in_minutes: 3
-                YAML
-                before(:each) { write_file(file, yaml) }
-                before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
-                before(:each) { copy('%/vpc.json', 'vpc.json') }
-                before(:each) { copy('%/sg.yaml', 'sg.yaml') }
-                before(:each) { copy('%/sg.json', 'sg.json') }
-                before(:each) { copy('%/iam.yaml', 'iam.yaml') }
-                before(:each) { copy('%/iam.json', 'iam.json') }
-                before(:each) { run_command('cfndk create --stack-names=Test Test2') }
-                it do
-                  aggregate_failures do
-                    expect(last_command_started).to be_successfully_executed
-                    expect(last_command_started).to have_output(/INFO create.../)
-                    expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
-                    expect(last_command_started).not_to have_output(/INFO validate stack: Test3-#{uuid}$/)
-                    expect(last_command_started).not_to have_output(/INFO creating stack: Test3-#{uuid}$/)
-                    expect(last_command_started).not_to have_output(/INFO created stack: Test3-#{uuid}$/)
                   end
                 end
                 after(:each) { run_command('cfndk destroy -f') }
