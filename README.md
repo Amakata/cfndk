@@ -2,6 +2,8 @@
 
 This is easy operation/integration support tool for AWS CloudFormation.
 
+[![CircleCI](https://circleci.com/gh/Amakata/cfndk/tree/master.svg?style=svg)](https://circleci.com/gh/Amakata/cfndk/tree/master)
+
 このツールは、AWS CloudFromationのための簡単な運用/構築サポートツールです。
 
 kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプレートを書かずにDSLで表現するツールには様々な物があります。
