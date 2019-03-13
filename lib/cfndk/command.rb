@@ -241,8 +241,6 @@ module CFnDK
     option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
     option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
-    option :stack_names, type: :array, desc: 'Target stack names'
-    option :keypair_names, type: :array, desc: 'Target keypair names'
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
