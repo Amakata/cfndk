@@ -134,7 +134,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                 expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
                 expect(last_command_started).to have_output(/INFO deleted keypair: Test1$/)
                 expect(last_command_started).to have_output(/INFO deleted stack: Test$/)
-                expect{cloudformation_stack('Test').exist}.to raise_error(Aws::CloudFormation::Errors::ValidationError)
+                expect { cloudformation_stack('Test').exist }.to raise_error(Aws::CloudFormation::Errors::ValidationError)
               end
             end
             after(:each) { run_command('cfndk destroy -f') }

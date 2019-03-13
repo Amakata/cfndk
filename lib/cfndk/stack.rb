@@ -24,13 +24,11 @@ module CFnDK
         {
           key: 'origina_name',
           value: @name,
-        }
+        },
       ]
       tags.push(
-        {
-          key: 'UUID',
-          value: @option[:uuid],
-        }
+        key: 'UUID',
+        value: @option[:uuid]
       ) if @option[:uuid]
       @client.create_stack(
         stack_name: name,
@@ -38,12 +36,13 @@ module CFnDK
         parameters: parameters,
         capabilities: capabilities,
         timeout_in_minutes: timeout_in_minutes,
-        tags: tags,
+        tags: tags
       )
     end
 
     def wait_until_create
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      CFnDK.logger.info(('waiting create stack: ' + name).color(:green))
       begin
         @client.wait_until(
           :stack_create_complete,
@@ -85,6 +84,7 @@ module CFnDK
 
     def wait_until_update
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      CFnDK.logger.info(('waiting update stack: ' + name).color(:green))
       @client.wait_until(
         :stack_update_complete,
         stack_name: name
@@ -108,6 +108,7 @@ module CFnDK
     def wait_until_destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
       return unless exits?
+      CFnDK.logger.info(('waiting delete stack: ' + name).color(:green))
       @client.wait_until(
         :stack_delete_complete,
         stack_name: name
@@ -117,45 +118,126 @@ module CFnDK
 
     def create_change_set
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('creating change set: ' + name).color(:green))
-      CFnDK.logger.debug('Name        :' + name)
+      CFnDK.logger.info(('creating change set: ' + change_set_name).color(:green))
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
+      tags = [
+        {
+          key: 'origina_name',
+          value: @name,
+        },
+      ]
+      tags.push(
+        key: 'UUID',
+        value: @option[:uuid]
+      ) if @option[:uuid]
+      tags.push(
+        key: 'CHANGE_SET_UUID',
+        value: @option[:change_set_uuid]
+      ) if @option[:change_set_uuid]
       @client.create_change_set(
         stack_name: name,
         template_body: template_body,
         parameters: parameters,
         capabilities: capabilities,
-        change_set_name: name
+        change_set_name: change_set_name,
+        change_set_type: exits? ? 'UPDATE' : 'CREATE',
+        tags: tags
       )
     end
 
     def wait_until_create_change_set
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless exits?
+      CFnDK.logger.info(('waiting create change set: ' + change_set_name).color(:green))
+      @client.wait_until(
+        :change_set_create_complete,
+        stack_name: name,
+        change_set_name: change_set_name
+      )
+      CFnDK.logger.info(('created change set: ' + change_set_name).color(:green))
+    end
+
+    def execute_change_set
+      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      CFnDK.logger.info(('executing change set: ' + change_set_name).color(:green))
+      @client.execute_change_set(
+        stack_name: name,
+        change_set_name: change_set_name
+      )
+      CFnDK.logger.info(('execute change set: ' + change_set_name).color(:green))
+    end
+
+    def delete_change_set
+      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      CFnDK.logger.info(('deleting change set: ' + change_set_name).color(:green))
+      @client.delete_change_set(
+        stack_name: name,
+        change_set_name: change_set_name
+      )
+      CFnDK.logger.info(('deleted change set: ' + change_set_name).color(:green))
+    end
+
+    def report_change_set
+      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      CFnDK.logger.info('*****************************************************'.color(:green))
+      CFnDK.logger.info(('change set: ' + change_set_name).color(:green))
+      CFnDK.logger.info('*****************************************************'.color(:green))
+      CFnDK.logger.info('')
       begin
-        @client.wait_until(
-          :change_set_create_complete,
-          stack_name: name,
-          change_set_name: name
-        )
-        CFnDK.logger.info(('created chnage set: ' + name).color(:green))
-      rescue Aws::Waiters::Errors::FailureStateError => ex
         resp = @client.describe_change_set(
-          change_set_name: name,
+          change_set_name: change_set_name,
           stack_name: name
         )
-        if resp.status_reason != "The submitted information didn't contain changes. Submit different information to create a change set."
-          CFnDK.logger.error ex.message.color(:red)
-          raise ex
-        else
-          CFnDK.logger.error(('failed create change set: ' + name).color(:red))
-          CFnDK.logger.error resp.status_reason
-          @client.delete_change_set(
-            change_set_name: name,
-            stack_name: name
-          )
-          CFnDK.logger.info(('deleted change set: ' + name).color(:red))
+        CFnDK.logger.info('Execution Status: '.color(:green) + colored_status(resp.execution_status))
+        CFnDK.logger.info('Status:           '.color(:green) + colored_status(resp.status))
+        CFnDK.logger.info('Reason:           '.color(:green) + resp.status_reason) if resp.status_reason
+        if @option[:types].instance_of?(Array) && @option[:types].include?('tag')
+          CFnDK.logger.info('Tags:'.color(:green))
+          tags_rows = resp.tags.map do |item|
+            [
+              item.key,
+              item.value,
+            ]
+          end
+          unless tags_rows.empty?
+            table = Terminal::Table.new headings: %w(Key Value), rows: tags_rows
+            CFnDK.logger.info table
+          end
         end
+        if @option[:types].instance_of?(Array) && @option[:types].include?('parameter')
+          CFnDK.logger.info('Parameters:'.color(:green))
+          parameter_rows = resp.parameters.map do |item|
+            [
+              item.parameter_key,
+              item.parameter_value,
+              item.use_previous_value,
+              item.resolved_value,
+            ]
+          end
+          unless parameter_rows.empty?
+            table = Terminal::Table.new headings: ['Key', 'Value', 'Use Previous Value', 'Resolved Value'], rows: parameter_rows
+            CFnDK.logger.info table
+          end
+        end
+        if @option[:types].instance_of?(Array) && @option[:types].include?('changes')
+          CFnDK.logger.info('Changes:'.color(:green))
+          changes_rows = resp.changes.map do |item|
+            [
+              item.resource_change.action,
+              item.resource_change.logical_resource_id,
+              item.resource_change.physical_resource_id,
+              item.resource_change.resource_type,
+              item.resource_change.replacement,
+            ]
+          end
+          unless changes_rows.empty?
+            table = Terminal::Table.new headings: %w(Action Logical Physical Type Replacement), rows: changes_rows
+            CFnDK.logger.info table
+          end
+        end
+      rescue Aws::CloudFormation::Errors::ValidationError => ex
+        CFnDK.logger.warn ex.message
       end
     end
 
@@ -177,6 +259,16 @@ module CFnDK
       false
     end
 
+    def created?
+      resp = @client.describe_stacks(
+        stack_name: name
+      )
+      return false if resp.stacks[0].stack_status == 'REVIEW_IN_PROGRESS'
+      true
+    rescue Aws::CloudFormation::Errors::ValidationError
+      false
+    end
+
     def report
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
       CFnDK.logger.info('*****************************************************'.color(:green))
@@ -187,23 +279,23 @@ module CFnDK
         resp = @client.describe_stacks(
           stack_name: name
         ).stacks[0]
-        CFnDK.logger.info(('Status: ').color(:green) + colored_status(resp.stack_status))
-        CFnDK.logger.info(('Reason: ').color(:green) + resp.stack_status_reason) if resp.stack_status_reason
+        CFnDK.logger.info('Status: '.color(:green) + colored_status(resp.stack_status))
+        CFnDK.logger.info('Reason: '.color(:green) + resp.stack_status_reason) if resp.stack_status_reason
         if @option[:types].instance_of?(Array) && @option[:types].include?('tag')
-          CFnDK.logger.info(('Tags:').color(:green))
+          CFnDK.logger.info('Tags:'.color(:green))
           tags_rows = resp.tags.map do |item|
             [
               item.key,
               item.value,
             ]
           end
-          if tags_rows.size > 0
-            table = Terminal::Table.new headings: ['Key', 'Value'], rows: tags_rows
+          unless tags_rows.empty?
+            table = Terminal::Table.new headings: %w(Key Value), rows: tags_rows
             CFnDK.logger.info table
           end
         end
         if @option[:types].instance_of?(Array) && @option[:types].include?('parameter')
-          CFnDK.logger.info(('Parameters:').color(:green))
+          CFnDK.logger.info('Parameters:'.color(:green))
           parameter_rows = resp.parameters.map do |item|
             [
               item.parameter_key,
@@ -212,13 +304,13 @@ module CFnDK
               item.resolved_value,
             ]
           end
-          if parameter_rows.size > 0
+          unless parameter_rows.empty?
             table = Terminal::Table.new headings: ['Key', 'Value', 'Use Previous Value', 'Resolved Value'], rows: parameter_rows
             CFnDK.logger.info table
           end
         end
         if @option[:types].instance_of?(Array) && @option[:types].include?('output')
-          CFnDK.logger.info(('Outputs:').color(:green))
+          CFnDK.logger.info('Outputs:'.color(:green))
           output_rows = resp.outputs.map do |item|
             [
               item.output_key,
@@ -227,7 +319,7 @@ module CFnDK
               item.description,
             ]
           end
-          if output_rows.size > 0
+          unless output_rows.empty?
             table = Terminal::Table.new headings: ['Key', 'Value', 'Export Name', 'Description'], rows: output_rows
             CFnDK.logger.info table
           end
@@ -236,8 +328,8 @@ module CFnDK
         CFnDK.logger.warn ex.message
       end
       if @option[:types].instance_of?(Array) && @option[:types].include?('resource')
-        begin      
-          CFnDK.logger.info(('Resources:').color(:green))    
+        begin
+          CFnDK.logger.info('Resources:'.color(:green))
           rows = @client.describe_stack_resources(
             stack_name: name
           ).stack_resources.map do |item|
@@ -251,7 +343,7 @@ module CFnDK
               item.description,
             ]
           end
-          if rows.size > 0
+          unless rows.empty?
             table = Terminal::Table.new headings: %w(Logical Physical Type Timestamp Status Reason Desc), rows: rows
             CFnDK.logger.info table
           end
@@ -260,7 +352,7 @@ module CFnDK
         end
       end
       if @option[:types].instance_of?(Array) && @option[:types].include?('event')
-        CFnDK.logger.info(('Events:').color(:green))
+        CFnDK.logger.info('Events:'.color(:green))
         begin
           rows = @client.describe_stack_events(
             stack_name: name
@@ -272,7 +364,7 @@ module CFnDK
               item.resource_status_reason,
             ]
           end
-          if rows.size > 0
+          unless rows.empty?
             table = Terminal::Table.new headings: %w(Type Time Status Reason), rows: rows
             CFnDK.logger.info table
           end
@@ -284,6 +376,10 @@ module CFnDK
 
     def name
       [@name, @option[:uuid]].compact.join('-')
+    end
+
+    def change_set_name
+      [@name, @option[:uuid], @option[:change_set_uuid]].compact.join('-')
     end
 
     def template_body

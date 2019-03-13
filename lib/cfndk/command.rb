@@ -94,7 +94,7 @@ module CFnDK
     option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     option :stack_names, type: :array, desc: 'Target stack names'
-    option :types, type: :array, default: ['tag', 'output', 'parameter', 'resource', 'event'], desc: 'Report type'
+    option :types, type: :array, default: %w(tag output parameter resource event), desc: 'Report type'
     def report
       CFnDK.logger.info 'report...'.color(:green)
 
@@ -122,5 +122,7 @@ module CFnDK
     subcommand 'keypair', KeyPairCommand
     desc 'stack SUBCOMMAND ...ARGS', 'Manage stack'
     subcommand 'stack', StackCommand
+    desc 'changeset SUBCOMMAND ...ARGS', 'Manage change set'
+    subcommand 'changeset', ChangeSetCommand
   end
 end

@@ -31,6 +31,7 @@ require 'cfndk/subcommand_help_returnable'
 require 'cfndk/config_file_loadable'
 require 'cfndk/key_pair_command'
 require 'cfndk/stack_command'
+require 'cfndk/change_set_command'
 require 'cfndk/command'
 
 module CFnDK

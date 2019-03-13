@@ -18,6 +18,7 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 * CloudFormationでバージョンコントロールシステムと連動した継続的インテグレーションのための基盤対応
 * Keypairの作成/削除
 * コマンド、サブコマンド、冪統性を考慮したコマンドライン体系、オプションの整理、ヘルプの追加
+* Change Set対応
 
 ## インストール
 
@@ -65,14 +66,14 @@ cfndk init
 
 ### ```create```
 
-cfndk.ymlで定義されているスタックを作成します。
+cfndk.ymlで定義されているキーペアとスタックを作成します。
 
 ```cfndk create [option]```
 
 
 ### ```destroy```
 
-cfndk.ymlで定義されているスタックを削除します。
+cfndk.ymlで定義されているるキーペアとスタックを削除します。
 
 ```
 cfndk destroy [option]
@@ -102,8 +103,44 @@ cfndk.ymlで定義されているスタックについてレポートします�
 ```
 cfndk report [option]
 ```
+### ```keypair```
 
-### [option]
+cfndk.ymlで定義されているキーペアの作成/削除を行うサブコマンドです。
+
+詳細は
+
+```
+cfndk keypair help
+```
+
+で確認できます。
+
+### ```stack```
+
+cfndk.ymlで定義されているスタックの作成/更新/削除/レポート/テンプレート検証を行うサブコマンドです。
+
+詳細は
+
+```
+cfndk stack help
+```
+
+で確認できます。
+
+
+### ```changeset```
+
+cfndk.ymlで定義されているスタックのチェンジセットの作成/実行/削除/レポートを行うサブコマンドです。
+
+詳細は
+
+```
+cfndk changeset help
+```
+
+で確認できます。
+
+### 主なoption
 
 #### ```-v --verbose```
 
@@ -120,10 +157,25 @@ cfndi.ymlのparametersのerb内で値で参照することができます。
 
 ####  ```-u, --uuid uuid```
 
-指定されたUUIDを使用します。
-UUIDが指定されるとスタック名に付加されます。
+スタック名、チェンジセット名に指定されたUUIDを使用します。
+UUIDが指定されるとスタック名、チェンジセット名に付加されます。
 またcfndi.ymlのparametersの値で参照することができます。
-```-u```は最後に指定されたものが有効になります。
+
+スタック名は下記のようになります。
+何も指定されない場合はcfndk.ymlで定義されたスタック名がそのまま使われます。
+
+```[Stack Original Name]-[Stack's UUID]```
+
+####  ```--change-set-uuid uuid```
+
+チェンジセット名に指定されたUUIDを使用します。
+UUIDが指定されるとチェンジセット名に付加されます。
+
+このオプションが指定された場合チェンジセット名は下記のようになります。
+何も指定されない場合はチェンジセット名にはスタック名がそのまま使われます。
+
+```[Stack Name]-[Changeset's UUID]```
+
 
 #### ```--stack-names=name1 name2```
 
@@ -142,13 +194,19 @@ UUIDが指定されるとスタック名に付加されます。
 
 動作の確認メッセージと入力をスキップします。
 
+他にもオプションはあります。
+詳細はコマンドヘルプを参照してください。
+
 ## 環境変数
 
 ### ```CFNDK_UUID```
 
 この環境変数が指定されている場合、```--uuid $CFNDK_UUID```が指定されたものとして動作します。
-```-u```のほうが優先されます。
+```--uuid```のほうが優先されます。
 
+### ```CFNDK_CHANGE_SET_UUID```
+
+この環境変数が指定されている場合、```--change-set-uuid $CFNDK_CHANGE_SET_UUID```が指定されたものとして動作します。
 
 ## cfndk.yml
 
@@ -304,13 +362,13 @@ dependsを指定すると、create,update,create-or-changeset,destoryのコマ�
 
   * ```append_uuid(glue='-')```
 
-    UUIDガ指定されている場合、```[glueの文字列] + [UUID]```を返します。
+    スタックのUUIDガ指定されている場合、```[glueの文字列] + [Stack's UUID]```を返します。
     UUIDが指定されてい無い場合は空文字が返ります。
     glueで接続文字を置き換えることができます。
 
   * ```uuid```
 
-    UUIDを返します。
+    スタックのUUIDを返します。
     UUIDが指定されてい無い場合は空文字が返ります。
 
   * ```properties(key)```

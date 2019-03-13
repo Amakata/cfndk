@@ -56,7 +56,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'when --config-path cfndk2.yml and empty stacks' do
             before(:each) { run_command("cfndk stack create --config-path=#{file2}") }
             it 'displays empty stack log' do
@@ -1034,7 +1034,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                 expect(last_command_started).to have_output(/INFO validate.../)
               end
             end
-          end 
+          end
           context 'when --config-path cfndk2.yml and empty stacks' do
             before(:each) { run_command("cfndk stack validate --config-path=#{file2}") }
             it 'displays empty stack log' do
@@ -1153,7 +1153,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'with empty keypairs and stacks' do
             yaml = <<-"YAML"
             keypairs:
@@ -1168,7 +1168,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'with keypairs and stacks' do
             yaml = <<-"YAML"
             keypairs:

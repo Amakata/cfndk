@@ -56,7 +56,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'when --config-path cfndk2.yml and empty keypairs' do
             before(:each) { run_command("cfndk keypair create --config-path=#{file2}") }
             it 'displays empty keypair log' do
@@ -78,7 +78,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
             end
           end
-  
+
           context 'with keyparis:', keypairs: true do
             context 'without keypair' do
               before(:each) { write_file(file, 'keypairs:') }
@@ -118,7 +118,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
-  
+
             context 'with two keypairs' do
               yaml = <<-"YAML"
               keypairs:
@@ -138,7 +138,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
-  
+
             context 'with a keypair and a key_file' do
               context 'without UUID', uuid: true do
                 context 'without append_uuid' do
@@ -162,7 +162,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   end
                   after(:each) { run_command('cfndk destroy -f') }
                 end
-  
+
                 context 'with append_uuid' do
                   yaml = <<-"YAML"
                   keypairs:
@@ -185,7 +185,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   after(:each) { run_command('cfndk destroy -f') }
                 end
               end
-  
+
               context 'with UUID', uuid: true do
                 yaml = <<-"YAML"
                 keypairs:
@@ -208,7 +208,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   end
                   after(:each) { run_command("cfndk destroy -u=#{uuid} -f") }
                 end
-  
+
                 context 'when env CFNDK_UUID=38437346-c75c-47c5-83b4-d504f85e275b' do
                   before(:each) { set_environment_variable('CFNDK_UUID', uuid) }
                   before(:each) { run_command('cfndk keypair create') }

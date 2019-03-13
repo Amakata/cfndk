@@ -51,24 +51,46 @@ module CFnDK
       end
     end
 
-    def create_or_changeset
+    def create_change_set
       @sequence.each do |stacks|
-        create_stacks = []
-        changeset_stacks = []
         stacks.each do |name|
-          if @stacks[name].exits?
-            @stacks[name].create_change_set
-            changeset_stacks.push name
+          @stacks[name].create_change_set
+        end
+        stacks.each do |name|
+          @stacks[name].wait_until_create_change_set
+        end
+      end
+    end
+
+    def execute_change_set
+      @sequence.each do |stacks|
+        created_stacks = []
+        stacks.each do |name|
+          created_stacks.push(name) if @stacks[name].created?
+          @stacks[name].execute_change_set
+        end
+        stacks.each do |name|
+          if created_stacks.include?(name)
+            @stacks[name].wait_until_update
           else
-            @stacks[name].create
-            create_stacks.push name
+            @stacks[name].wait_until_create
           end
         end
-        create_stacks.each do |name|
-          @stacks[name].wait_until_create
+      end
+    end
+
+    def delete_change_set
+      @sequence.reverse_each do |stacks|
+        stacks.each do |name|
+          @stacks[name].delete_change_set
         end
-        changeset_stacks.each do |name|
-          @stacks[name].wait_until_create_change_set
+      end
+    end
+
+    def report_change_set
+      @sequence.each do |stacks|
+        stacks.each do |name|
+          @stacks[name].report_change_set
         end
       end
     end
