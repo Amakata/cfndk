@@ -27,6 +27,10 @@ require 'cfndk/key_pairs'
 require 'cfndk/erb_string'
 require 'cfndk/logger'
 require 'cfndk/credential_provider_chain'
+require 'cfndk/subcommand_help_returnable'
+require 'cfndk/config_file_loadable'
+require 'cfndk/key_pair_command'
+require 'cfndk/stack_command'
 require 'cfndk/command'
 
 module CFnDK

@@ -1,5 +1,5 @@
 module CFnDK
-  module SubcommandHelpReternable
+  module SubcommandHelpReturnable
     module ClassMethods
       def subcommand_help(cmd)
         desc 'help [COMMAND]', 'Describe subcommands or one specific subcommand'
