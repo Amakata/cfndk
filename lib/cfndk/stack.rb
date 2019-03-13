@@ -178,76 +178,107 @@ module CFnDK
     end
 
     def report
-      report_stack
-      report_stack_resource
-      report_event
-    end
-
-    def report_stack
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      CFnDK.logger.info('*****************************************************'.color(:green))
       CFnDK.logger.info(('stack: ' + name).color(:green))
-      CFnDK.logger.debug('Name        :' + name)
+      CFnDK.logger.info('*****************************************************'.color(:green))
+      CFnDK.logger.info('')
       begin
-        rows = @client.describe_stacks(
+        resp = @client.describe_stacks(
           stack_name: name
-        ).stacks.map do |item|
-          [
-            item.stack_name,
-            item.creation_time,
-            item.deletion_time,
-            colored_status(item.stack_status),
-            item.stack_status_reason]
+        ).stacks[0]
+        CFnDK.logger.info(('Status: ').color(:green) + colored_status(resp.stack_status))
+        CFnDK.logger.info(('Reason: ').color(:green) + resp.stack_status_reason) if resp.stack_status_reason
+        if @option[:types].instance_of?(Array) && @option[:types].include?('tag')
+          CFnDK.logger.info(('Tags:').color(:green))
+          tags_rows = resp.tags.map do |item|
+            [
+              item.key,
+              item.value,
+            ]
+          end
+          if tags_rows.size > 0
+            table = Terminal::Table.new headings: ['Key', 'Value'], rows: tags_rows
+            CFnDK.logger.info table
+          end
         end
-        table = Terminal::Table.new headings: %w(Name Creation Deletion Status Reason), rows: rows
-        CFnDK.logger.info table
+        if @option[:types].instance_of?(Array) && @option[:types].include?('parameter')
+          CFnDK.logger.info(('Parameters:').color(:green))
+          parameter_rows = resp.parameters.map do |item|
+            [
+              item.parameter_key,
+              item.parameter_value,
+              item.use_previous_value,
+              item.resolved_value,
+            ]
+          end
+          if parameter_rows.size > 0
+            table = Terminal::Table.new headings: ['Key', 'Value', 'Use Previous Value', 'Resolved Value'], rows: parameter_rows
+            CFnDK.logger.info table
+          end
+        end
+        if @option[:types].instance_of?(Array) && @option[:types].include?('output')
+          CFnDK.logger.info(('Outputs:').color(:green))
+          output_rows = resp.outputs.map do |item|
+            [
+              item.output_key,
+              item.output_value,
+              item.export_name,
+              item.description,
+            ]
+          end
+          if output_rows.size > 0
+            table = Terminal::Table.new headings: ['Key', 'Value', 'Export Name', 'Description'], rows: output_rows
+            CFnDK.logger.info table
+          end
+        end
       rescue Aws::CloudFormation::Errors::ValidationError => ex
         CFnDK.logger.warn ex.message
       end
-    end
-
-    def report_event
-      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('stack: ' + name).color(:green))
-      CFnDK.logger.debug('Name        :' + name)
-      begin
-        rows = @client.describe_stack_events(
-          stack_name: name
-        ).stack_events.map do |item|
-          [
-            item.resource_type,
-            item.timestamp,
-            colored_status(item.resource_status),
-            item.resource_status_reason]
+      if @option[:types].instance_of?(Array) && @option[:types].include?('resource')
+        begin      
+          CFnDK.logger.info(('Resources:').color(:green))    
+          rows = @client.describe_stack_resources(
+            stack_name: name
+          ).stack_resources.map do |item|
+            [
+              item.logical_resource_id,
+              item.physical_resource_id,
+              item.resource_type,
+              item.timestamp,
+              colored_status(item.resource_status),
+              item.resource_status_reason,
+              item.description,
+            ]
+          end
+          if rows.size > 0
+            table = Terminal::Table.new headings: %w(Logical Physical Type Timestamp Status Reason Desc), rows: rows
+            CFnDK.logger.info table
+          end
+        rescue Aws::CloudFormation::Errors::ValidationError => ex
+          CFnDK.logger.warn ex.message
         end
-        table = Terminal::Table.new headings: %w(Type Time Status Reason), rows: rows
-        CFnDK.logger.info table
-      rescue Aws::CloudFormation::Errors::ValidationError => ex
-        CFnDK.logger.warn ex.message
       end
-    end
-
-    def report_stack_resource
-      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('stack: ' + name).color(:green))
-      CFnDK.logger.debug('Name        :' + name)
-      begin
-        rows = @client.describe_stack_resources(
-          stack_name: name
-        ).stack_resources.map do |item|
-          [
-            item.logical_resource_id,
-            item.physical_resource_id,
-            item.resource_type,
-            item.timestamp,
-            colored_status(item.resource_status),
-            item.resource_status_reason,
-            item.description,
-          ]
+      if @option[:types].instance_of?(Array) && @option[:types].include?('event')
+        CFnDK.logger.info(('Events:').color(:green))
+        begin
+          rows = @client.describe_stack_events(
+            stack_name: name
+          ).stack_events.map do |item|
+            [
+              item.resource_type,
+              item.timestamp,
+              colored_status(item.resource_status),
+              item.resource_status_reason,
+            ]
+          end
+          if rows.size > 0
+            table = Terminal::Table.new headings: %w(Type Time Status Reason), rows: rows
+            CFnDK.logger.info table
+          end
+        rescue Aws::CloudFormation::Errors::ValidationError => ex
+          CFnDK.logger.warn ex.message
         end
-        table = Terminal::Table.new headings: %w(L-name P-name Type Timestamp Status Reason Desc), rows: rows
-        CFnDK.logger.info table
-      rescue Aws::CloudFormation::Errors::ValidationError => ex
-        CFnDK.logger.warn ex.message
       end
     end
 
