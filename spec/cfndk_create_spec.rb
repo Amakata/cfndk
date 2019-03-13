@@ -195,7 +195,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   expect(last_command_started).to have_output(/INFO create.../)
                   expect(last_command_started).to have_output(/INFO creating keypair: Test1/)
                   expect(last_command_started).to have_output(/INFO created keypair: Test1/)
-                  expect(last_command_started).o have_output(/INFO creating keypair: Test2/)
+                  expect(last_command_started).to have_output(/INFO creating keypair: Test2/)
                   expect(last_command_started).to have_output(/INFO created keypair: Test2/)
                   expect(last_command_started).to have_output(/INFO creating keypair: Test3/)
                   expect(last_command_started).to have_output(/INFO created keypair: Test3/)
