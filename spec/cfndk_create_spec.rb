@@ -237,7 +237,7 @@ RSpec.describe 'CFnDK', type: :aruba do
             end
           end
 
-          context 'with a stack' do
+          context 'with a stack', aaa: true do
             yaml = <<-"YAML"
             stacks:
               Test:
@@ -260,6 +260,8 @@ RSpec.describe 'CFnDK', type: :aruba do
                 expect(cloudformation_stack('Test').stack_status).to eq('CREATE_COMPLETE')
                 expect(cloudformation_stack('Test').timeout_in_minutes).to eq(2)
                 expect(cloudformation_stack('Test').parameters[0].parameter_value).to eq('sample')
+                expect(cloudformation_stack('Test').tags[0].key).to eq('origina_name')
+                expect(cloudformation_stack('Test').tags[0].value).to eq('Test')
               end
             end
             after(:each) { run_command('cfndk destroy -f') }
@@ -400,7 +402,7 @@ RSpec.describe 'CFnDK', type: :aruba do
             after(:each) { run_command('cfndk destroy -f') }
           end
           context 'with UUID', uuid: true do
-            context 'when -u 38437346-c75c-47c5-83b4-d504f85e275b' do
+            context 'when -u 38437346-c75c-47c5-83b4-d504f85e275b', aaa: true do
               yaml = <<-"YAML"
               stacks:
                 Test:
@@ -423,7 +425,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { copy('%/sg.yaml', 'sg.yaml') }
               before(:each) { copy('%/sg.json', 'sg.json') }
               before(:each) { run_command("cfndk create -u=#{uuid}") }
-              it do
+              it 'displays created logs and stacks exist' do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed
                   expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
@@ -432,6 +434,23 @@ RSpec.describe 'CFnDK', type: :aruba do
                   expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
                   expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
                   expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
+                  expect(cloudformation_stack("Test-#{uuid}")).to exist
+                  expect(cloudformation_stack("Test-#{uuid}").stack_name).to eq("Test-#{uuid}")
+                  expect(cloudformation_stack("Test-#{uuid}").stack_status).to eq('CREATE_COMPLETE')
+                  expect(cloudformation_stack("Test-#{uuid}").timeout_in_minutes).to eq(2)
+                  expect(cloudformation_stack("Test-#{uuid}").parameters[0].parameter_value).to eq("sample-#{uuid}")
+                  expect(cloudformation_stack("Test-#{uuid}").tags[0].key).to eq('origina_name')
+                  expect(cloudformation_stack("Test-#{uuid}").tags[0].value).to eq('Test')
+                  expect(cloudformation_stack("Test-#{uuid}").tags[1].key).to eq('UUID')
+                  expect(cloudformation_stack("Test-#{uuid}").tags[1].value).to eq(uuid)
+                  expect(cloudformation_stack("Test2-#{uuid}")).to exist
+                  expect(cloudformation_stack("Test2-#{uuid}").stack_name).to eq("Test2-#{uuid}")
+                  expect(cloudformation_stack("Test2-#{uuid}").stack_status).to eq('CREATE_COMPLETE')
+                  expect(cloudformation_stack("Test2-#{uuid}").parameters[0].parameter_value).to eq("sample-#{uuid}")
+                  expect(cloudformation_stack("Test2-#{uuid}").tags[0].key).to eq('origina_name')
+                  expect(cloudformation_stack("Test2-#{uuid}").tags[0].value).to eq('Test2')
+                  expect(cloudformation_stack("Test2-#{uuid}").tags[1].key).to eq('UUID')
+                  expect(cloudformation_stack("Test2-#{uuid}").tags[1].value).to eq(uuid)
                 end
               end
               after(:each) { run_command("cfndk destroy -f -u=#{uuid}") }

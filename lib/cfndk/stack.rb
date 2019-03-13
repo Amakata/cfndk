@@ -20,12 +20,25 @@ module CFnDK
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
       CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
+      tags = [
+        {
+          key: 'origina_name',
+          value: @name,
+        }
+      ]
+      tags.push(
+        {
+          key: 'UUID',
+          value: @option[:uuid],
+        }
+      ) if @option[:uuid]
       @client.create_stack(
         stack_name: name,
         template_body: template_body,
         parameters: parameters,
         capabilities: capabilities,
-        timeout_in_minutes: timeout_in_minutes
+        timeout_in_minutes: timeout_in_minutes,
+        tags: tags,
       )
     end
 
@@ -65,7 +78,7 @@ module CFnDK
           CFnDK.logger.warn "#{ex.message}: #{name}".color(:red)
           false
         else
-          raise  ex
+          raise ex
         end
       end
     end
