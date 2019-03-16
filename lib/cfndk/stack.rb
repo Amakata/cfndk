@@ -50,8 +50,9 @@ module CFnDK
         )
         CFnDK.logger.info(('created stack: ' + name).color(:green))
       rescue Aws::Waiters::Errors::FailureStateError => ex
-        CFnDK.logger.error ex.message
-        report_event
+        CFnDK.logger.error "#{ex.class}: #{ex.message}".color(:red)
+        @option[:type] = %w(tag output parameter resource event)
+        report
         raise ex
       end
     end
@@ -117,7 +118,7 @@ module CFnDK
     end
 
     def create_change_set
-      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return nil if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
       CFnDK.logger.info(('creating change set: ' + change_set_name).color(:green))
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
@@ -144,6 +145,15 @@ module CFnDK
         change_set_type: exits? ? 'UPDATE' : 'CREATE',
         tags: tags
       )
+      @name
+    rescue Aws::CloudFormation::Errors::ValidationError => ex
+      if review_in_progress?
+        CFnDK.logger.warn("failed create change set because the stack on REVIEW_IN_PROGRESS already exist : #{change_set_name}".color(:orange))
+        nil
+      else
+        CFnDK.logger.error("failed create change set: #{change_set_name}".color(:red))
+        raise ex
+      end
     end
 
     def wait_until_create_change_set
@@ -155,17 +165,33 @@ module CFnDK
         stack_name: name,
         change_set_name: change_set_name
       )
-      CFnDK.logger.info(('created change set: ' + change_set_name).color(:green))
+      CFnDK.logger.info("created change set: #{change_set_name}".color(:green))
+    rescue Aws::Waiters::Errors::FailureStateError => ex
+      case ex.message
+      when 'stopped waiting, encountered a failure state'
+        unless available_change_set?
+          delete_change_set
+          CFnDK.logger.warn("failed create change set because this change set is UNAVAILABLE: #{change_set_name}".color(:orange))
+          return
+        end
+      end
+      raise ex
     end
 
     def execute_change_set
-      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
-      CFnDK.logger.info(('executing change set: ' + change_set_name).color(:green))
-      @client.execute_change_set(
-        stack_name: name,
-        change_set_name: change_set_name
-      )
-      CFnDK.logger.info(('execute change set: ' + change_set_name).color(:green))
+      return nil if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      if available_change_set?
+        CFnDK.logger.info(('executing change set: ' + change_set_name).color(:green))
+        @client.execute_change_set(
+          stack_name: name,
+          change_set_name: change_set_name
+        )
+        CFnDK.logger.info(('execute change set: ' + change_set_name).color(:green))
+        @name
+      else
+        CFnDK.logger.warn("failed execute change set because this change set is not AVAILABLE: #{change_set_name}".color(:orange))
+        nil
+      end
     end
 
     def delete_change_set
@@ -184,61 +210,61 @@ module CFnDK
       CFnDK.logger.info(('change set: ' + change_set_name).color(:green))
       CFnDK.logger.info('*****************************************************'.color(:green))
       CFnDK.logger.info('')
-      begin
-        resp = @client.describe_change_set(
-          change_set_name: change_set_name,
-          stack_name: name
-        )
-        CFnDK.logger.info('Execution Status: '.color(:green) + colored_status(resp.execution_status))
-        CFnDK.logger.info('Status:           '.color(:green) + colored_status(resp.status))
-        CFnDK.logger.info('Reason:           '.color(:green) + resp.status_reason) if resp.status_reason
-        if @option[:types].instance_of?(Array) && @option[:types].include?('tag')
-          CFnDK.logger.info('Tags:'.color(:green))
-          tags_rows = resp.tags.map do |item|
-            [
-              item.key,
-              item.value,
-            ]
-          end
-          unless tags_rows.empty?
-            table = Terminal::Table.new headings: %w(Key Value), rows: tags_rows
-            CFnDK.logger.info table
-          end
+      resp = @client.describe_change_set(
+        change_set_name: change_set_name,
+        stack_name: name
+      )
+      CFnDK.logger.info('Execution Status: '.color(:green) + colored_status(resp.execution_status))
+      CFnDK.logger.info('Status:           '.color(:green) + colored_status(resp.status))
+      CFnDK.logger.info('Reason:           '.color(:green) + resp.status_reason) if resp.status_reason
+      if @option[:types].instance_of?(Array) && @option[:types].include?('tag')
+        CFnDK.logger.info('Tags:'.color(:green))
+        tags_rows = resp.tags.map do |item|
+          [
+            item.key,
+            item.value,
+          ]
         end
-        if @option[:types].instance_of?(Array) && @option[:types].include?('parameter')
-          CFnDK.logger.info('Parameters:'.color(:green))
-          parameter_rows = resp.parameters.map do |item|
-            [
-              item.parameter_key,
-              item.parameter_value,
-              item.use_previous_value,
-              item.resolved_value,
-            ]
-          end
-          unless parameter_rows.empty?
-            table = Terminal::Table.new headings: ['Key', 'Value', 'Use Previous Value', 'Resolved Value'], rows: parameter_rows
-            CFnDK.logger.info table
-          end
+        unless tags_rows.empty?
+          table = Terminal::Table.new headings: %w(Key Value), rows: tags_rows
+          CFnDK.logger.info table
         end
-        if @option[:types].instance_of?(Array) && @option[:types].include?('changes')
-          CFnDK.logger.info('Changes:'.color(:green))
-          changes_rows = resp.changes.map do |item|
-            [
-              item.resource_change.action,
-              item.resource_change.logical_resource_id,
-              item.resource_change.physical_resource_id,
-              item.resource_change.resource_type,
-              item.resource_change.replacement,
-            ]
-          end
-          unless changes_rows.empty?
-            table = Terminal::Table.new headings: %w(Action Logical Physical Type Replacement), rows: changes_rows
-            CFnDK.logger.info table
-          end
-        end
-      rescue Aws::CloudFormation::Errors::ValidationError => ex
-        CFnDK.logger.warn ex.message
       end
+      if @option[:types].instance_of?(Array) && @option[:types].include?('parameter')
+        CFnDK.logger.info('Parameters:'.color(:green))
+        parameter_rows = resp.parameters.map do |item|
+          [
+            item.parameter_key,
+            item.parameter_value,
+            item.use_previous_value,
+            item.resolved_value,
+          ]
+        end
+        unless parameter_rows.empty?
+          table = Terminal::Table.new headings: ['Key', 'Value', 'Use Previous Value', 'Resolved Value'], rows: parameter_rows
+          CFnDK.logger.info table
+        end
+      end
+      if @option[:types].instance_of?(Array) && @option[:types].include?('changes')
+        CFnDK.logger.info('Changes:'.color(:green))
+        changes_rows = resp.changes.map do |item|
+          [
+            item.resource_change.action,
+            item.resource_change.logical_resource_id,
+            item.resource_change.physical_resource_id,
+            item.resource_change.resource_type,
+            item.resource_change.replacement,
+          ]
+        end
+        unless changes_rows.empty?
+          table = Terminal::Table.new headings: %w(Action Logical Physical Type Replacement), rows: changes_rows
+          CFnDK.logger.info table
+        end
+      end
+    rescue Aws::CloudFormation::Errors::ValidationError => ex
+      CFnDK.logger.warn "#{ex.class}: #{ex.message}".color(:red)
+    rescue Aws::CloudFormation::Errors::ChangeSetNotFound => ex
+      CFnDK.logger.warn "#{ex.class}: #{ex.message}".color(:red)
     end
 
     def validate
@@ -266,6 +292,27 @@ module CFnDK
       return false if resp.stacks[0].stack_status == 'REVIEW_IN_PROGRESS'
       true
     rescue Aws::CloudFormation::Errors::ValidationError
+      false
+    end
+
+    def review_in_progress?
+      resp = @client.describe_stacks(
+        stack_name: name
+      )
+      return true if resp.stacks[0].stack_status == 'REVIEW_IN_PROGRESS'
+      false
+    rescue Aws::CloudFormation::Errors::ValidationError
+      false
+    end
+
+    def available_change_set?
+      resp = @client.describe_change_set(
+        change_set_name: change_set_name,
+        stack_name: name
+      )
+      return true if resp.execution_status == 'AVAILABLE'
+      false
+    rescue Aws::CloudFormation::Errors::ChangeSetNotFound
       false
     end
 
@@ -325,7 +372,7 @@ module CFnDK
           end
         end
       rescue Aws::CloudFormation::Errors::ValidationError => ex
-        CFnDK.logger.warn ex.message
+        CFnDK.logger.warn "#{ex.class}: #{ex.message}".color(:red)
       end
       if @option[:types].instance_of?(Array) && @option[:types].include?('resource')
         begin
@@ -348,7 +395,7 @@ module CFnDK
             CFnDK.logger.info table
           end
         rescue Aws::CloudFormation::Errors::ValidationError => ex
-          CFnDK.logger.warn ex.message
+          CFnDK.logger.warn "#{ex.class}: #{ex.message}".color(:red)
         end
       end
       if @option[:types].instance_of?(Array) && @option[:types].include?('event')
@@ -369,7 +416,7 @@ module CFnDK
             CFnDK.logger.info table
           end
         rescue Aws::CloudFormation::Errors::ValidationError => ex
-          CFnDK.logger.warn ex.message
+          CFnDK.logger.warn "#{ex.class}: #{ex.message}".color(:red)
         end
       end
     end
@@ -384,6 +431,10 @@ module CFnDK
 
     def template_body
       File.open(@template_file, 'r').read
+    end
+
+    def large_template?
+      File.size(@template_file) > 51200
     end
 
     def parameters

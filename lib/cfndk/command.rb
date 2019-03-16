@@ -59,7 +59,7 @@ module CFnDK
       stacks.create
       return 0
     rescue => e
-      CFnDK.logger.error e.inspect.color(:red)
+      CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)
       e.backtrace_locations.each do |line|
         CFnDK.logger.debug line
       end
@@ -87,7 +87,7 @@ module CFnDK
         return 2
       end
     rescue => e
-      CFnDK.logger.error e.inspect.color(:red)
+      CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)
       e.backtrace_locations.each do |line|
         CFnDK.logger.debug line
       end
@@ -109,7 +109,7 @@ module CFnDK
       stacks.report
       return 0
     rescue => e
-      CFnDK.logger.error e.inspect.color(:red)
+      CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)
       e.backtrace_locations.each do |line|
         CFnDK.logger.debug line
       end

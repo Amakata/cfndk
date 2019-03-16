@@ -37,7 +37,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end
@@ -423,7 +423,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end
@@ -567,7 +567,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end
@@ -1016,7 +1016,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end
@@ -1111,7 +1111,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end

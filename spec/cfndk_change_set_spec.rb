@@ -37,7 +37,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end
@@ -195,7 +195,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it 'displays cyclic dependency error and exit code = 1' do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
+                  expect(last_command_started).to have_output(/ERROR RuntimeError: There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -216,7 +216,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it 'displays Requires capabilities error and exit code = 1' do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR Requires capabilities : \[CAPABILITY_NAMED_IAM\]/)
+                  expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::InsufficientCapabilitiesException: Requires capabilities : \[CAPABILITY_NAMED_IAM\]/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -455,7 +455,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end
@@ -554,7 +554,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   expect(last_command_started).to have_output(/INFO destroy../)
                   expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
                   expect(last_command_started).to have_output(/INFO deleting change set: Test$/)
-                  expect(last_command_started).to have_output(/ERROR Stack \[Test\] does not exist$/)
+                  expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::ValidationError: Stack \[Test\] does not exist$/)
                 end
               end
             end
@@ -598,7 +598,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
-              expect(last_command_started).to have_output(/ERROR File does not exist./)
+              expect(last_command_started).to have_output(/ERROR RuntimeError: File does not exist./)
             end
           end
         end
@@ -719,40 +719,9 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { run_command('cfndk changeset execute') }
               it 'displays executed logs' do
                 aggregate_failures do
-                  expect(last_command_started).to be_successfully_executed
-                  expect(last_command_started).to have_output(/INFO execute change set: Test$/)
-                  expect(last_command_started).to have_output(/INFO execute change set: Test2$/)
-                end
-              end
-              after(:each) { run_command('cfndk destroy -f') }
-            end
-            context 'when cyclic dependency', dependency: true do
-              yaml = <<-"YAML"
-              stacks:
-                Test:
-                  template_file: vpc.yaml
-                  parameter_input: vpc.json
-                  timeout_in_minutes: 2
-                  depends:
-                    - Test2
-                Test2:
-                  template_file: sg.yaml
-                  parameter_input: sg.json
-                  depends:
-                    - Test
-              YAML
-
-              before(:each) { write_file(file, yaml) }
-              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
-              before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { copy('%/sg.yaml', 'sg.yaml') }
-              before(:each) { copy('%/sg.json', 'sg.json') }
-              before(:each) { run_command_and_stop('cfndk changeset create') }
-              before(:each) { run_command('cfndk changeset execute') }
-              it 'displays cyclic dependency error and exit code = 1' do
-                aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
+                  expect(last_command_started).to have_output(/INFO execute change set: Test2$/)
+                  expect(last_command_started).to have_output(/ERROR Aws::Waiters::Errors::FailureStateError: stopped waiting, encountered a failure state$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -776,7 +745,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed
-                  expect(last_command_started).to have_output(/INFO created change set: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }

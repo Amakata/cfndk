@@ -53,10 +53,12 @@ module CFnDK
 
     def create_change_set
       @sequence.each do |stacks|
+        wait_until_stacks = []
         stacks.each do |name|
-          @stacks[name].create_change_set
+          wait_until_stacks.push(@stacks[name].create_change_set)
         end
-        stacks.each do |name|
+        wait_until_stacks.compact!
+        wait_until_stacks.each do |name|
           @stacks[name].wait_until_create_change_set
         end
       end
@@ -65,11 +67,13 @@ module CFnDK
     def execute_change_set
       @sequence.each do |stacks|
         created_stacks = []
+        wait_until_stacks = []
         stacks.each do |name|
           created_stacks.push(name) if @stacks[name].created?
-          @stacks[name].execute_change_set
+          wait_until_stacks.push(@stacks[name].execute_change_set)
         end
-        stacks.each do |name|
+        wait_until_stacks.compact!
+        wait_until_stacks.each do |name|
           if created_stacks.include?(name)
             @stacks[name].wait_until_update
           else
