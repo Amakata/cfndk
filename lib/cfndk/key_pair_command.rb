@@ -19,8 +19,10 @@ module CFnDK
       keypairs.create
       return 0
     rescue => e
-      CFnDK.logger.error e.message.color(:red)
-      CFnDK.logger.debug e.backtrace
+      CFnDK.logger.error e.inspect.color(:red)
+      e.backtrace_locations.each do |line|
+        CFnDK.logger.debug line
+      end
       return 1
     end
 
@@ -41,8 +43,10 @@ module CFnDK
         return 2
       end
     rescue => e
-      CFnDK.logger.error e.message.color(:red)
-      CFnDK.logger.debug e.backtrace
+      CFnDK.logger.error e.inspect.color(:red)
+      e.backtrace_locations.each do |line|
+        CFnDK.logger.debug line
+      end
       return 1
     end
   end

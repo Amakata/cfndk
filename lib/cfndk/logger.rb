@@ -11,7 +11,7 @@ module CFnDK
   class CFnDKLogger < Logger
     def initialize(options)
       super(STDOUT)
-      self.level = Logger::INFO unless options[:v]
+      self.level = Logger::INFO unless options[:verbose]
       self.formatter = proc { |severity, datetime, progname, message|
         message.to_s.split(/\n/).map do |line|
           "#{datetime} #{severity} #{line}\n"
