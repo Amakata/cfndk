@@ -18,7 +18,7 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 * CloudFormationでバージョンコントロールシステムと連動した継続的インテグレーションのための基盤対応
 * Keypairの作成/削除
 * コマンド、サブコマンド、冪統性を考慮したコマンドライン体系、オプションの整理、ヘルプの追加
-* Change Set対応
+* チェンジセットの作成/実行/削除/レポート(experimental)
 
 ## インストール
 
@@ -128,7 +128,7 @@ cfndk stack help
 で確認できます。
 
 
-### ```changeset```
+### ```changeset``` (experimental)
 
 cfndk.ymlで定義されているスタックのチェンジセットの作成/実行/削除/レポートを行うサブコマンドです。
 
