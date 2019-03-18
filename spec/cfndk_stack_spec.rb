@@ -170,7 +170,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR stopped waiting, encountered a failure state$/)
+                  expect(last_command_started).to have_output(/ERROR Aws::Waiters::Errors::FailureStateError: stopped waiting, encountered a failure state$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -200,7 +200,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
+                  expect(last_command_started).to have_output(/ERROR RuntimeError: There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -221,7 +221,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR Requires capabilities : \[CAPABILITY_NAMED_IAM\]/)
+                  expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::InsufficientCapabilitiesException: Requires capabilities : \[CAPABILITY_NAMED_IAM\]/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -623,7 +623,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               aggregate_failures do
                 expect(last_command_started).to have_exit_status(1)
                 expect(last_command_started).to have_output(/INFO validate stack: Test$/)
-                expect(last_command_started).to have_output(/ERROR Template format error: At least one Resources member must be defined\.$/)
+                expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::ValidationError: Template format error: At least one Resources member must be defined\.$/)
               end
             end
           end
@@ -643,7 +643,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               aggregate_failures do
                 expect(last_command_started).to have_exit_status(1)
                 expect(last_command_started).to have_output(/INFO validate stack: Test$/)
-                expect(last_command_started).to have_output(/ERROR \[\/Resources\] 'null' values are not allowed in templates$/)
+                expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::ValidationError: \[\/Resources\] 'null' values are not allowed in templates$/)
               end
             end
           end
@@ -705,7 +705,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                     expect(last_command_started).to have_exit_status(1)
                     expect(last_command_started).to have_output(/INFO validate stack: Test$/)
                     expect(last_command_started).to have_output(/INFO updating stack: Test$/)
-                    expect(last_command_started).to have_output(/ERROR Stack \[Test\] does not exist$/)
+                    expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::ValidationError: Stack \[Test\] does not exist$/)
                   end
                 end
               end
@@ -770,7 +770,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it 'displays cyclic error log and exit status = 1' do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
+                  expect(last_command_started).to have_output(/ERROR RuntimeError: There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -801,7 +801,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               it 'displays Requires capabilities log and exit status = 1' do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR Requires capabilities : \[CAPABILITY_NAMED_IAM\]/)
+                  expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::InsufficientCapabilitiesException: Requires capabilities : \[CAPABILITY_NAMED_IAM\]/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -1079,7 +1079,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               aggregate_failures do
                 expect(last_command_started).to have_exit_status(1)
                 expect(last_command_started).to have_output(/INFO validate stack: Test$/)
-                expect(last_command_started).to have_output(/ERROR Template format error: At least one Resources member must be defined\.$/)
+                expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::ValidationError: Template format error: At least one Resources member must be defined\.$/)
               end
             end
           end
@@ -1099,7 +1099,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               aggregate_failures do
                 expect(last_command_started).to have_exit_status(1)
                 expect(last_command_started).to have_output(/INFO validate stack: Test$/)
-                expect(last_command_started).to have_output(/ERROR \[\/Resources\] 'null' values are not allowed in templates$/)
+                expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::ValidationError: \[\/Resources\] 'null' values are not allowed in templates$/)
               end
             end
           end
