@@ -1,12 +1,13 @@
 module CFnDK
   class KeyPair
     attr_reader :key_file
-    def initialize(name, data, option, credentials)
+    def initialize(name, data, option, global_config, credentials)
+      @global_config = global_config
       @name = name
       @key_file = nil
       @key_file = data['key_file'] || nil if data
       @option = option
-      @client = Aws::EC2::Client.new(credentials: credentials)
+      @client = Aws::EC2::Client.new(credentials: credentials, region: @global_config.region)
     end
 
     def create

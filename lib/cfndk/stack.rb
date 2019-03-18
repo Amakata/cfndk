@@ -1,16 +1,18 @@
 module CFnDK
   class Stack
-    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes
-    def initialize(name, data, option, credentials)
+    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region
+    def initialize(name, data, option, global_config, credentials)
+      @global_config = global_config
       @name = name
       @template_file = data['template_file'] || ''
       @parameter_input = data['parameter_input'] || ''
       @capabilities = data['capabilities'] || []
       @depends = data['depends'] || []
-      @timeout_in_minutes = data['timeout_in_minutes'] || 1
+      @region = data['region'] || @global_config.region
+      @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
       @override_parameters = data['parameters'] || {}
       @option = option
-      @client = Aws::CloudFormation::Client.new(credentials: credentials)
+      @client = Aws::CloudFormation::Client.new(credentials: credentials, region: @region)
     end
 
     def create
@@ -20,6 +22,7 @@ module CFnDK
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
       CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
+      CFnDK.logger.debug('Region      :' + region)
       tags = [
         {
           key: 'origina_name',
@@ -64,6 +67,7 @@ module CFnDK
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
       CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
+      CFnDK.logger.debug('Region      :' + region)
       begin
         @client.update_stack(
           stack_name: name,
@@ -98,6 +102,7 @@ module CFnDK
       if exits?
         CFnDK.logger.info(('deleting stack: ' + name).color(:green))
         CFnDK.logger.debug('Name        :' + name)
+        CFnDK.logger.debug('Region      :' + region)
         @client.delete_stack(
           stack_name: name
         )
@@ -122,6 +127,7 @@ module CFnDK
       CFnDK.logger.info(('creating change set: ' + change_set_name).color(:green))
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
+      CFnDK.logger.debug('Region      :' + region)
       tags = [
         {
           key: 'origina_name',

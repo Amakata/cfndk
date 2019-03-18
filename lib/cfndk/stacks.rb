@@ -3,7 +3,7 @@ module CFnDK
     def initialize(data, option, credentials)
       @option = option
       @credentials = credentials
-
+      @global_config = CFnDK::GlobalConfig.new(data, option)
       prepare_stack(data)
       prepare_sequence
     end
@@ -113,7 +113,7 @@ module CFnDK
       @stacks = {}
       return unless data['stacks'].is_a?(Hash)
       data['stacks'].each do |name, properties|
-        @stacks[name] = Stack.new(name, properties, @option, @credentials)
+        @stacks[name] = Stack.new(name, properties, @option, @global_config, @credentials)
       end
     end
 
