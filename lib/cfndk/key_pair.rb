@@ -6,8 +6,9 @@ module CFnDK
       @name = name
       @key_file = nil
       @key_file = data['key_file'] || nil if data
+      @region = data['region'] || @global_config.region
       @option = option
-      @client = Aws::EC2::Client.new(credentials: credentials, region: @global_config.region)
+      @client = Aws::EC2::Client.new(credentials: credentials, region: @region)
     end
 
     def create
