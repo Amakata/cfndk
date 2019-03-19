@@ -13,6 +13,7 @@ module CFnDK
       @override_parameters = data['parameters'] || {}
       @option = option
       @client = Aws::CloudFormation::Client.new(credentials: credentials, region: @region)
+      @s3_client = Aws::S3::Client.new(credentials: credentials, region: @region)
     end
 
     def create
@@ -33,13 +34,20 @@ module CFnDK
         key: 'UUID',
         value: @option[:uuid]
       ) if @option[:uuid]
-      @client.create_stack(
+      hash = {
         stack_name: name,
-        template_body: template_body,
         parameters: parameters,
         capabilities: capabilities,
         timeout_in_minutes: timeout_in_minutes,
-        tags: tags
+        tags: tags,
+      }
+      if large_template?
+        hash[:template_url] = upload_template_file()
+      else
+        hash[:template_body] = template_body()
+      end
+      @client.create_stack(
+        hash
       )
     end
 
@@ -69,11 +77,18 @@ module CFnDK
       CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
       CFnDK.logger.debug('Region      :' + region)
       begin
-        @client.update_stack(
+        hash = {
           stack_name: name,
-          template_body: template_body,
           parameters: parameters,
-          capabilities: capabilities
+          capabilities: capabilities,
+        }
+        if large_template?
+          hash[:template_url] = upload_template_file()
+        else
+          hash[:template_body] = template_body()
+        end
+        @client.update_stack(
+          hash
         )
         true
       rescue Aws::CloudFormation::Errors::ValidationError => ex
@@ -142,14 +157,21 @@ module CFnDK
         key: 'CHANGE_SET_UUID',
         value: @option[:change_set_uuid]
       ) if @option[:change_set_uuid]
-      @client.create_change_set(
+      hash = {
         stack_name: name,
-        template_body: template_body,
         parameters: parameters,
         capabilities: capabilities,
         change_set_name: change_set_name,
         change_set_type: exits? ? 'UPDATE' : 'CREATE',
-        tags: tags
+        tags: tags,
+      }
+      if large_template?
+        hash[:template_url] = upload_template_file()
+      else
+        hash[:template_body] = template_body()
+      end
+      @client.create_change_set(
+        hash
       )
       @name
     rescue Aws::CloudFormation::Errors::ValidationError => ex
@@ -432,7 +454,7 @@ module CFnDK
     end
 
     def change_set_name
-      [@name, @option[:uuid], @option[:change_set_uuid]].compact.join('-')
+      [@name, @option[:change_set_uuid]].compact.join('-')
     end
 
     def template_body
@@ -455,6 +477,43 @@ module CFnDK
     end
 
     private
+
+    def upload_template_file
+      bucket = @region + '-' + @global_config.s3_template_bucket
+      begin
+        @s3_client.head_bucket(bucket: bucket)
+      rescue Aws::S3::Errors::NotFound
+        @s3_client.create_bucket(bucket: bucket)
+        CFnDK.logger.debug('Creatt S3 bucket: ' + bucket)
+        @s3_client.put_bucket_lifecycle_configuration(
+          bucket: bucket,
+          lifecycle_configuration: {
+            rules: [
+              {
+                expiration: {
+                  days: 1,
+                },
+                status: 'Enabled',
+                id: 'Delete Old Files',
+                prefix: '',
+                abort_incomplete_multipart_upload: {
+                  days_after_initiation: 1,
+                },
+              },
+            ],
+          }
+        )
+      end
+      key = [@global_config.s3_template_hash, @template_file].compact.join('/')
+      @s3_client.put_object(
+        body: template_body,
+        bucket: bucket,
+        key: key
+      )
+      url = "https://s3.amazonaws.com/#{bucket}/#{key}"
+      CFnDK.logger.debug('Put S3 object: ' + url)
+      url
+    end
 
     def colored_status(str)
       case str
