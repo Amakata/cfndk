@@ -56,6 +56,7 @@ module CFnDK
       return unless @key_file
       key_file = CFnDK::ErbString.new(@key_file, @option).value
       CFnDK.logger.info(('create key file: ' + key_file).color(:green))
+      FileUtils.mkdir_p(File.dirname(key_file))
       File.write(key_file, key_pair.key_material)
     end
   end
