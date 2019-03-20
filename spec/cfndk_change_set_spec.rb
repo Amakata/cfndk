@@ -274,11 +274,11 @@ RSpec.describe 'CFnDK', type: :aruba do
                   aggregate_failures do
                     expect(last_command_started).to be_successfully_executed
                     expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating change set: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO created change set: Test-#{uuid}$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test$/)
                     expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating change set: Test2-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO created change set: Test2-#{uuid}$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                   end
                 end
                 after(:each) { run_command("cfndk destroy -f -u=#{uuid}") }
@@ -312,11 +312,11 @@ RSpec.describe 'CFnDK', type: :aruba do
                     aggregate_failures do
                       expect(last_command_started).to be_successfully_executed
                       expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating change set: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created change set: Test-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test$/)
                       expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating change set: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created change set: Test2-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                     end
                   end
                   after(:each) { run_command('cfndk destroy -f') }
@@ -349,11 +349,11 @@ RSpec.describe 'CFnDK', type: :aruba do
                       expect(last_command_started).to be_successfully_executed
                       expect(last_command_started).to have_output(/INFO create.../)
                       expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating change set: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created change set: Test-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test$/)
                       expect(last_command_started).not_to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO creating change set: Test2-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO created change set: Test2-#{uuid}$/)
+                      expect(last_command_started).not_to have_output(/INFO creating change set: Test2$/)
+                      expect(last_command_started).not_to have_output(/INFO created change set: Test2$/)
                     end
                   end
                   after(:each) { run_command('cfndk destroy -f') }
@@ -396,21 +396,21 @@ RSpec.describe 'CFnDK', type: :aruba do
                       expect(last_command_started).to be_successfully_executed
                       expect(last_command_started).to have_output(/INFO create.../)
                       expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating change set: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created change set: Test-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test$/)
                       expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating change set: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created change set: Test2-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                       expect(last_command_started).not_to have_output(/INFO validate stack: Test3-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO creating change set: Test3-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO created change set: Test3-#{uuid}$/)
+                      expect(last_command_started).not_to have_output(/INFO creating change set: Test3$/)
+                      expect(last_command_started).not_to have_output(/INFO created change set: Test3$/)
                     end
                   end
                   after(:each) { run_command('cfndk destroy -f') }
                 end
               end
 
-              context 'when -u 38437346-c75c-47c5-83b4-d504f85e275c and --change-set-uuid 38437346-c75c-47c5-83b4-d504f85e275b' do
+              context 'when -u 38437346-c75c-47c5-83b4-d504f85e275b and --change-set-uuid 38437346-c75c-47c5-83b4-d504f85e275c' do
                 yaml = <<-"YAML"
                 stacks:
                   Test:
@@ -432,16 +432,16 @@ RSpec.describe 'CFnDK', type: :aruba do
                 before(:each) { copy('%/vpc.json', 'vpc.json') }
                 before(:each) { copy('%/sg.yaml', 'sg.yaml') }
                 before(:each) { copy('%/sg.json', 'sg.json') }
-                before(:each) { run_command("cfndk changeset create -u=#{uuid} --change-set-uuid 38437346-c75c-47c5-83b4-d504f85e275b") }
+                before(:each) { run_command("cfndk changeset create -u=#{uuid} --change-set-uuid 38437346-c75c-47c5-83b4-d504f85e275c") }
                 it do
                   aggregate_failures do
                     expect(last_command_started).to be_successfully_executed
                     expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating change set: Test-#{uuid}-38437346-c75c-47c5-83b4-d504f85e275b$/)
-                    expect(last_command_started).to have_output(/INFO created change set: Test-#{uuid}-38437346-c75c-47c5-83b4-d504f85e275b$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test-38437346-c75c-47c5-83b4-d504f85e275c$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test-38437346-c75c-47c5-83b4-d504f85e275c$/)
                     expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating change set: Test2-#{uuid}-38437346-c75c-47c5-83b4-d504f85e275b$/)
-                    expect(last_command_started).to have_output(/INFO created change set: Test2-#{uuid}-38437346-c75c-47c5-83b4-d504f85e275b$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test2-38437346-c75c-47c5-83b4-d504f85e275c$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test2-38437346-c75c-47c5-83b4-d504f85e275c$/)
                   end
                 end
                 after(:each) { run_command("cfndk destroy -f -u=#{uuid}") }

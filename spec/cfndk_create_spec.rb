@@ -250,7 +250,7 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { write_file(file, yaml) }
             before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
             before(:each) { copy('%/vpc.json', 'vpc.json') }
-            before(:each) { run_command('cfndk create') }
+            before(:each) { run_command_and_stop('cfndk create') }
             it 'displays created log and stack exist' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
@@ -426,7 +426,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { copy('%/vpc.json', 'vpc.json') }
               before(:each) { copy('%/sg.yaml', 'sg.yaml') }
               before(:each) { copy('%/sg.json', 'sg.json') }
-              before(:each) { run_command("cfndk create -u=#{uuid}") }
+              before(:each) { run_command_and_stop("cfndk create -u=#{uuid}") }
               it 'displays created logs and stacks exist' do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed
