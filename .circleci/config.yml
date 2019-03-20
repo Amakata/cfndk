@@ -13,7 +13,9 @@ jobs:
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
       # - image: circleci/postgres:9.4
-    parallelism: 1
+    environment:
+      PARALLEL_TESTS_CONCURRENCY: 2
+    parallelism: 2
     working_directory: ~/repo
 
     steps:
@@ -41,10 +43,13 @@ jobs:
           name: run tests
           command: |
             export AWS_REGION=ap-northeast-1
-            CFNDK_COVERAGE=1 bundle exec rspec \
+            TEST_FILES="$(circleci tests glob "spec/*_spec.rb" | circleci tests split --split-by=timings)"
+            CFNDK_COVERAGE=1 bundle exec parallel_rspec \
+              -n ${PARALLEL_TESTS_CONCURRENCY}
               --format p \
               --format html \
-              --out /tmp/test-results/rspec.html
+              --out /tmp/test-results/rspec<%= ENV['TEST_ENV_NUMBER'] %>.html \
+              $TEST_FILES
               
       # collect reports
       - store_test_results:
