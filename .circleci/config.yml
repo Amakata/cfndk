@@ -46,7 +46,8 @@ jobs:
             circleci tests glob "spec/**/*_spec.rb"
             TEST_FILES="$(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)"
             CFNDK_COVERAGE=1 bundle exec parallel_rspec \
-              -n ${PARALLEL_TESTS_CONCURRENCY}
+              -n ${PARALLEL_TESTS_CONCURRENCY} \
+              --profile 10 \
               --format p \
               --format html \
               --out /tmp/test-results/rspec<%= ENV['TEST_ENV_NUMBER'] %>.html \
