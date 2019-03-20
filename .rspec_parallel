@@ -1,0 +1,5 @@
+--format p
+--format html
+--out /tmp/test-results/rspec<%= ENV['TEST_ENV_NUMBER'] %>.html
+--profile 10
+
