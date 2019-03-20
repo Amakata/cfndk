@@ -58,7 +58,10 @@ module CFnDK
         @client.wait_until(
           :stack_create_complete,
           stack_name: name
-        )
+        ) do |w|
+          w.max_attempts = 360
+          w.delay = 10
+        end
         CFnDK.logger.info(('created stack: ' + name).color(:green))
       rescue Aws::Waiters::Errors::FailureStateError => ex
         CFnDK.logger.error "#{ex.class}: #{ex.message}".color(:red)
@@ -108,7 +111,10 @@ module CFnDK
       @client.wait_until(
         :stack_update_complete,
         stack_name: name
-      )
+      ) do |w|
+        w.max_attempts = 360
+        w.delay = 10
+      end
       CFnDK.logger.info(('updated stack: ' + name).color(:green))
     end
 
@@ -133,7 +139,10 @@ module CFnDK
       @client.wait_until(
         :stack_delete_complete,
         stack_name: name
-      )
+      ) do |w|
+        w.max_attempts = 360
+        w.delay = 10
+      end
       CFnDK.logger.info(('deleted stack: ' + name).color(:green))
     end
 
@@ -192,7 +201,10 @@ module CFnDK
         :change_set_create_complete,
         stack_name: name,
         change_set_name: change_set_name
-      )
+      ) do |w|
+        w.max_attempts = 360
+        w.delay = 10
+      end
       CFnDK.logger.info("created change set: #{change_set_name}".color(:green))
     rescue Aws::Waiters::Errors::FailureStateError => ex
       case ex.message
