@@ -10,4 +10,5 @@ group :development, :test do
   gem 'rspec'
   gem 'aruba'
   gem 'awspec'
+  gem 'parallel_tests'
 end
