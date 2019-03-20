@@ -2,10 +2,15 @@ require 'spec_helper'
 
 RSpec.describe 'CFnDK', type: :aruba do
   before(:each) { set_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
-  before(:each) { set_environment_variable('AWS_PROFILE', "#{ENV['AWS_PROFILE']}#{ENV['TEST_ENV_NUMBER']}") }
-  before(:each) { set_environment_variable('AWS_ACCESS_KEY_ID', "#{ENV['AWS_ACCESS_KEY_ID']}#{ENV['TEST_ENV_NUMBER']}") }
-  before(:each) { set_environment_variable('AWS_SECRET_ACCESS_KEY', "#{ENV['AWS_SECRET_ACCESS_KEY']}#{ENV['TEST_ENV_NUMBER']}") }
-  ENV['TEST_ENV_NUMBER']
+  before(:each) { set_environment_variable('AWS_PROFILE', "#{ENV['AWS_PROFILE']}#{ENV['TEST_ENV_NUMBER']}") 
+    p "#{ENV['AWS_PROFILE']}#{ENV['TEST_ENV_NUMBER']}"
+  }
+  before(:each) { set_environment_variable('AWS_ACCESS_KEY_ID', "#{ENV['AWS_ACCESS_KEY_ID']}#{ENV['TEST_ENV_NUMBER']}") 
+    p "#{ENV['AWS_ACCESS_KEY_ID']}#{ENV['TEST_ENV_NUMBER']}"
+  }
+  before(:each) { set_environment_variable('AWS_SECRET_ACCESS_KEY', "#{ENV['AWS_SECRET_ACCESS_KEY']}#{ENV['TEST_ENV_NUMBER']}") 
+    p "#{ENV['AWS_SECRET_ACCESS_KEY']}#{ENV['TEST_ENV_NUMBER']}"
+  }
   describe 'bin/cfndk' do
     before(:each) { setup_aruba }
     let(:file) { 'cfndk.yml' }
