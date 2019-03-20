@@ -4,8 +4,8 @@ module CFnDK
     def initialize(name, data, option, global_config, credentials)
       @global_config = global_config
       @name = name
-      @key_file = nil
-      @key_file = data['key_file'] || nil if data
+      data = {} unless data
+      @key_file = data['key_file'] || nil
       @region = data['region'] || @global_config.region
       @option = option
       @client = Aws::EC2::Client.new(credentials: credentials, region: @region)
