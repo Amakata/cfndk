@@ -50,7 +50,7 @@ jobs:
               --profile 10 \
               --format p \
               --format html \
-              --out /tmp/test-results/rspec<%= ENV['TEST_ENV_NUMBER'] %>.html \
+              --out /tmp/test-results/rspec${TEST_ENV_NUMBER}.html \
               $TEST_FILES
               
       # collect reports
