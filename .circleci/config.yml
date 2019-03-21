@@ -21,10 +21,6 @@ jobs:
             - v1-dependencies-{{ checksum "~/repo/Gemfile.lock" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-      - restore_cache:
-          keys:
-            - v1-runtime-log
-
       - run:
           name: install dependencies
           command: |
@@ -34,10 +30,10 @@ jobs:
           paths:
             - ~/repo/vendor/bundle
           key: v1-dependencies-{{ checksum "~/repo/Gemfile.lock" }}
-      - save_cache:
-          paths:
-            - ~/repo/runtime.log
-          key: v1-runtime-log
+
+      - restore_cache:
+          keys:
+            - v1-runtime-log
 
       # run tests!
       - run:
@@ -48,6 +44,10 @@ jobs:
               -n ${PARALLEL_TESTS_CONCURRENCY} \
               --runtime-log runtime.log \
               spec
+      - save_cache:
+          paths:
+            - ~/repo/runtime.log
+          key: v1-runtime-log
               
       # collect reports
       - store_test_results:
