@@ -1,7 +1,6 @@
 --format p
---format html
---out /tmp/test-results/rspec<%= ENV['TEST_ENV_NUMBER'] %>.html
---out tmp/parallel_runtime_rspec.log
+--format html --out /tmp/test-results/rspec<%= ENV['TEST_ENV_NUMBER'] %>.html
+--format ParallelTests::RSpec::RuntimeLogger --out tmp/parallel_runtime_rspec.log
 --profile 10
 
 
