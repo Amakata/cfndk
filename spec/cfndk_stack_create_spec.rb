@@ -76,6 +76,7 @@ RSpec.describe 'CFnDK', type: :aruba do
 
             context 'with a stack' do
               yaml = <<-"YAML"
+              global:
               stacks:
                 Test:
                   template_file: vpc.yaml
@@ -92,6 +93,56 @@ RSpec.describe 'CFnDK', type: :aruba do
                   expect(last_command_started).to have_output(/INFO validate stack: Test$/)
                   expect(last_command_started).to have_output(/INFO creating stack: Test$/)
                   expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with a 51200byte template stack' do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { append_to_file('vpc.yaml', ' ' * (51200 - file_size('vpc.yaml').to_i)) }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).not_to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with a 51201byte template stack', big: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { append_to_file('vpc.yaml', ' ' * (51200 + 1 - file_size('vpc.yaml').to_i)) }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates})
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }

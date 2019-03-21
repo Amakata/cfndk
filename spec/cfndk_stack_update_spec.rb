@@ -140,6 +140,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   before(:each) { run_command_and_stop('cfndk stack create') }
                   before(:each) { copy('%/vpc_different.yaml', 'vpc.yaml') }
                   before(:each) { run_command('cfndk stack update') }
+                  before(:each) { append_to_file('vpc.yaml', ' ' * (51200 + 1 - file_size('vpc.yaml').to_i)) }
                   it 'displays update log' do
                     aggregate_failures do
                       expect(last_command_started).to be_successfully_executed

@@ -75,6 +75,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { append_to_file('vpc.yaml', ' ' * (51200 + 1 - file_size('vpc.yaml').to_i)) }
               before(:each) { run_command('cfndk changeset create') }
               it 'displays created log' do
                 aggregate_failures do

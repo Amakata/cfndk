@@ -33,7 +33,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-runtime-log
+            - v2-runtime-log
 
       # run tests!
       - run:
@@ -42,14 +42,20 @@ jobs:
             export AWS_REGION=ap-northeast-1
             CFNDK_COVERAGE=1 bundle exec parallel_rspec \
               -n ${PARALLEL_TESTS_CONCURRENCY} \
-              --runtime-log runtime.log \
+              --runtime-log /home/circleci/repo/tmp/parallel_runtime_rspec.log \
               spec
+
       - save_cache:
           paths:
-            - ~/repo/runtime.log
-          key: v1-runtime-log
+            - /home/circleci/repo/tmp/parallel_runtime_rspec.log
+          key: v2-runtime-log
               
       # collect reports
+      - store_test_results:
+          path: /home/circleci/repo/tmp/parallel_runtime_rspec.log
+      - store_artifacts:
+          path: /home/circleci/repo/tmp/parallel_runtime_rspec.log
+          destination: test-results/parallel_runtime_rspec.log
       - store_test_results:
           path: /tmp/test-results
       - store_artifacts:
