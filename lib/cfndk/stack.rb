@@ -502,7 +502,7 @@ module CFnDK
         @s3_client.head_bucket(bucket: bucket)
       rescue Aws::S3::Errors::NotFound
         @s3_client.create_bucket(bucket: bucket)
-        CFnDK.logger.debug('Creatt S3 bucket: ' + bucket)
+        CFnDK.logger.info('Creatt S3 bucket: ' + bucket)
         @s3_client.put_bucket_lifecycle_configuration(
           bucket: bucket,
           lifecycle_configuration: {
@@ -529,7 +529,7 @@ module CFnDK
         key: key
       )
       url = "https://s3.amazonaws.com/#{bucket}/#{key}"
-      CFnDK.logger.debug('Put S3 object: ' + url)
+      CFnDK.logger.info('Put S3 object: ' + url)
       url
     end
 
