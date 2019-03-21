@@ -1,12 +1,14 @@
 module CFnDK
   class KeyPair
     attr_reader :key_file
-    def initialize(name, data, option, credentials)
+    def initialize(name, data, option, global_config, credentials)
+      @global_config = global_config
       @name = name
-      @key_file = nil
-      @key_file = data['key_file'] || nil if data
+      data = {} unless data
+      @key_file = data['key_file'] || nil
+      @region = data['region'] || @global_config.region
       @option = option
-      @client = Aws::EC2::Client.new(credentials: credentials)
+      @client = Aws::EC2::Client.new(credentials: credentials, region: @region)
     end
 
     def create
@@ -55,6 +57,7 @@ module CFnDK
       return unless @key_file
       key_file = CFnDK::ErbString.new(@key_file, @option).value
       CFnDK.logger.info(('create key file: ' + key_file).color(:green))
+      FileUtils.mkdir_p(File.dirname(key_file))
       File.write(key_file, key_pair.key_material)
     end
   end

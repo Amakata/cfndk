@@ -1,16 +1,19 @@
 module CFnDK
   class Stack
-    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes
-    def initialize(name, data, option, credentials)
+    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region
+    def initialize(name, data, option, global_config, credentials)
+      @global_config = global_config
       @name = name
       @template_file = data['template_file'] || ''
       @parameter_input = data['parameter_input'] || ''
       @capabilities = data['capabilities'] || []
       @depends = data['depends'] || []
-      @timeout_in_minutes = data['timeout_in_minutes'] || 1
+      @region = data['region'] || @global_config.region
+      @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
       @override_parameters = data['parameters'] || {}
       @option = option
-      @client = Aws::CloudFormation::Client.new(credentials: credentials)
+      @client = Aws::CloudFormation::Client.new(credentials: credentials, region: @region)
+      @s3_client = Aws::S3::Client.new(credentials: credentials, region: @region)
     end
 
     def create
@@ -20,6 +23,7 @@ module CFnDK
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
       CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
+      CFnDK.logger.debug('Region      :' + region)
       tags = [
         {
           key: 'origina_name',
@@ -30,13 +34,20 @@ module CFnDK
         key: 'UUID',
         value: @option[:uuid]
       ) if @option[:uuid]
-      @client.create_stack(
+      hash = {
         stack_name: name,
-        template_body: template_body,
         parameters: parameters,
         capabilities: capabilities,
         timeout_in_minutes: timeout_in_minutes,
-        tags: tags
+        tags: tags,
+      }
+      if large_template?
+        hash[:template_url] = upload_template_file()
+      else
+        hash[:template_body] = template_body()
+      end
+      @client.create_stack(
+        hash
       )
     end
 
@@ -47,7 +58,10 @@ module CFnDK
         @client.wait_until(
           :stack_create_complete,
           stack_name: name
-        )
+        ) do |w|
+          w.max_attempts = 360
+          w.delay = 10
+        end
         CFnDK.logger.info(('created stack: ' + name).color(:green))
       rescue Aws::Waiters::Errors::FailureStateError => ex
         CFnDK.logger.error "#{ex.class}: #{ex.message}".color(:red)
@@ -64,12 +78,20 @@ module CFnDK
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
       CFnDK.logger.debug('Timeout     :' + timeout_in_minutes.to_s)
+      CFnDK.logger.debug('Region      :' + region)
       begin
-        @client.update_stack(
+        hash = {
           stack_name: name,
-          template_body: template_body,
           parameters: parameters,
-          capabilities: capabilities
+          capabilities: capabilities,
+        }
+        if large_template?
+          hash[:template_url] = upload_template_file()
+        else
+          hash[:template_body] = template_body()
+        end
+        @client.update_stack(
+          hash
         )
         true
       rescue Aws::CloudFormation::Errors::ValidationError => ex
@@ -89,7 +111,10 @@ module CFnDK
       @client.wait_until(
         :stack_update_complete,
         stack_name: name
-      )
+      ) do |w|
+        w.max_attempts = 360
+        w.delay = 10
+      end
       CFnDK.logger.info(('updated stack: ' + name).color(:green))
     end
 
@@ -98,6 +123,7 @@ module CFnDK
       if exits?
         CFnDK.logger.info(('deleting stack: ' + name).color(:green))
         CFnDK.logger.debug('Name        :' + name)
+        CFnDK.logger.debug('Region      :' + region)
         @client.delete_stack(
           stack_name: name
         )
@@ -113,7 +139,10 @@ module CFnDK
       @client.wait_until(
         :stack_delete_complete,
         stack_name: name
-      )
+      ) do |w|
+        w.max_attempts = 360
+        w.delay = 10
+      end
       CFnDK.logger.info(('deleted stack: ' + name).color(:green))
     end
 
@@ -122,6 +151,7 @@ module CFnDK
       CFnDK.logger.info(('creating change set: ' + change_set_name).color(:green))
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
+      CFnDK.logger.debug('Region      :' + region)
       tags = [
         {
           key: 'origina_name',
@@ -136,14 +166,21 @@ module CFnDK
         key: 'CHANGE_SET_UUID',
         value: @option[:change_set_uuid]
       ) if @option[:change_set_uuid]
-      @client.create_change_set(
+      hash = {
         stack_name: name,
-        template_body: template_body,
         parameters: parameters,
         capabilities: capabilities,
         change_set_name: change_set_name,
         change_set_type: exits? ? 'UPDATE' : 'CREATE',
-        tags: tags
+        tags: tags,
+      }
+      if large_template?
+        hash[:template_url] = upload_template_file()
+      else
+        hash[:template_body] = template_body()
+      end
+      @client.create_change_set(
+        hash
       )
       @name
     rescue Aws::CloudFormation::Errors::ValidationError => ex
@@ -164,7 +201,10 @@ module CFnDK
         :change_set_create_complete,
         stack_name: name,
         change_set_name: change_set_name
-      )
+      ) do |w|
+        w.max_attempts = 360
+        w.delay = 10
+      end
       CFnDK.logger.info("created change set: #{change_set_name}".color(:green))
     rescue Aws::Waiters::Errors::FailureStateError => ex
       case ex.message
@@ -426,7 +466,7 @@ module CFnDK
     end
 
     def change_set_name
-      [@name, @option[:uuid], @option[:change_set_uuid]].compact.join('-')
+      [@name, @option[:change_set_uuid]].compact.join('-')
     end
 
     def template_body
@@ -449,6 +489,43 @@ module CFnDK
     end
 
     private
+
+    def upload_template_file
+      bucket = @region + '-' + @global_config.s3_template_bucket
+      begin
+        @s3_client.head_bucket(bucket: bucket)
+      rescue Aws::S3::Errors::NotFound
+        @s3_client.create_bucket(bucket: bucket)
+        CFnDK.logger.debug('Creatt S3 bucket: ' + bucket)
+        @s3_client.put_bucket_lifecycle_configuration(
+          bucket: bucket,
+          lifecycle_configuration: {
+            rules: [
+              {
+                expiration: {
+                  days: 1,
+                },
+                status: 'Enabled',
+                id: 'Delete Old Files',
+                prefix: '',
+                abort_incomplete_multipart_upload: {
+                  days_after_initiation: 1,
+                },
+              },
+            ],
+          }
+        )
+      end
+      key = [@global_config.s3_template_hash, @template_file].compact.join('/')
+      @s3_client.put_object(
+        body: template_body,
+        bucket: bucket,
+        key: key
+      )
+      url = "https://s3.amazonaws.com/#{bucket}/#{key}"
+      CFnDK.logger.debug('Put S3 object: ' + url)
+      url
+    end
 
     def colored_status(str)
       case str

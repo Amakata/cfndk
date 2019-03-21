@@ -6,13 +6,9 @@ version: 2
 jobs:
   test:
     docker:
-      # specify the version you desire here
       - image: circleci/ruby:2.4.1-node-browsers
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
+    environment:
+      PARALLEL_TESTS_CONCURRENCY: 2
     parallelism: 1
     working_directory: ~/repo
 
@@ -22,10 +18,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "Gemfile.lock" }}
+            - v1-dependencies-{{ checksum "~/repo/Gemfile.lock" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-
       - run:
           name: install dependencies
           command: |
@@ -33,18 +28,26 @@ jobs:
 
       - save_cache:
           paths:
-            - ./vendor/bundle
-          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+            - ~/repo/vendor/bundle
+          key: v1-dependencies-{{ checksum "~/repo/Gemfile.lock" }}
+
+      - restore_cache:
+          keys:
+            - v1-runtime-log
 
       # run tests!
       - run:
           name: run tests
           command: |
             export AWS_REGION=ap-northeast-1
-            CFNDK_COVERAGE=1 bundle exec rspec \
-              --format p \
-              --format html \
-              --out /tmp/test-results/rspec.html
+            CFNDK_COVERAGE=1 bundle exec parallel_rspec \
+              -n ${PARALLEL_TESTS_CONCURRENCY} \
+              --runtime-log runtime.log \
+              spec
+      - save_cache:
+          paths:
+            - ~/repo/runtime.log
+          key: v1-runtime-log
               
       # collect reports
       - store_test_results:

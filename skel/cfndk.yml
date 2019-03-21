@@ -1,3 +1,7 @@
+global:
+  region: ap-northeast-1
+  s3_template_bucket: cfndk-templates
+  timeout_in_minutes: 10
 keypairs:
   CFnDKSampleKey:
   CFnDKSampleKey2:

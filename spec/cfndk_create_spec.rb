@@ -3,6 +3,8 @@ require 'spec_helper'
 RSpec.describe 'CFnDK', type: :aruba do
   before(:each) { set_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
   before(:each) { set_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
+  before(:each) { set_environment_variable('AWS_ACCESS_KEY_ID', ENV["AWS_ACCESS_KEY_ID#{ENV['TEST_ENV_NUMBER']}"]) }
+  before(:each) { set_environment_variable('AWS_SECRET_ACCESS_KEY', ENV["AWS_SECRET_ACCESS_KEY#{ENV['TEST_ENV_NUMBER']}"]) }
   describe 'bin/cfndk' do
     before(:each) { setup_aruba }
     let(:file) { 'cfndk.yml' }
@@ -248,7 +250,7 @@ RSpec.describe 'CFnDK', type: :aruba do
             before(:each) { write_file(file, yaml) }
             before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
             before(:each) { copy('%/vpc.json', 'vpc.json') }
-            before(:each) { run_command('cfndk create') }
+            before(:each) { run_command_and_stop('cfndk create') }
             it 'displays created log and stack exist' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
@@ -424,7 +426,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { copy('%/vpc.json', 'vpc.json') }
               before(:each) { copy('%/sg.yaml', 'sg.yaml') }
               before(:each) { copy('%/sg.json', 'sg.json') }
-              before(:each) { run_command("cfndk create -u=#{uuid}") }
+              before(:each) { run_command_and_stop("cfndk create -u=#{uuid}") }
               it 'displays created logs and stacks exist' do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed

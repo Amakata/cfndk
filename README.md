@@ -19,6 +19,9 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 * Keypairの作成/削除
 * コマンド、サブコマンド、冪統性を考慮したコマンドライン体系、オプションの整理、ヘルプの追加
 * チェンジセットの作成/実行/削除/レポート(experimental)
+* Keypair/スタック毎のregionのサポート
+* 512000バイト以上の大きなテンプレートファイルの場合に自動的にS3にテンプレートファイルをアップロードして処理する機能
+* cfndk全体での共通設定
 
 ## インストール
 
@@ -213,12 +216,18 @@ UUIDが指定されるとチェンジセット名に付加されます。
 * example
 
 ```
+global:
+  region: ap-northeast-1
+  s3_template_bucket: cfndk-templates
+  timeout_in_minutes: 10
 keypairs:
   Key1:
+    region: us-east-1
   Key2:
     key_file: key/key2<%= append_uuid %>.pem
 stacks:
   Stack1:
+    region: us-east-1
     template_file: stack1/stack1.yaml 
     parameter_input: stack1/env.json
     parameters:
@@ -237,11 +246,17 @@ stacks:
 ```
 
 ```
+global:
+  region: [String]
+  s3_template_bucket: [String]
+  timeout_in_minutes: [Integer]
 keypairs:
   [String]:
+    region: [String]
     key_file: [String]
 stacks:
   [String]:
+    region: [String]
     template_file: [String]
     parameter_input: [String]
     parameters:
@@ -256,6 +271,33 @@ stacks:
       - [String]      
 ```
 
+### ```global:```
+
+全体設定を定義します。
+
+#### region (デフォルト: us-east-1)
+
+全体で利用するリージョンを指定します。
+指定されない場合は、AWS_REGION環境変数の値をリージョンとして使用します。
+AWS_REGIONも指定されない場合はus-east-1を利用します。
+
+#### timeout_in_minutes (デフォルト: 1)
+
+全体で利用するタイムアウト時間を分で指定します。
+
+#### s3_template_bucket (デフォルト: cfndk-templates)
+
+スタックのCloudFormationテンプレートファイルをアップロードするS3のバケット名を指定します。
+
+実際のバケット名は
+```
+[region]-[s3_template_bucket]
+```
+が使用されます。
+regionはスタック毎で指定されたものを利用します。
+
+S3バケットは一日で自動的に中身のオブジェクトが削除されるように設定されます。
+
 ### ```keypairs:```
 
 ```
@@ -267,6 +309,11 @@ cfndkで管理するキーペアを定義します。
 キーペアの配下には、管理するキーペアのオリジナル名を定義します。
 通常は、キーペアを作成するとこの名称が利用されます。
 UUIDを利用すると、```[Keypair Original Name]-[UUID]```のような形式のキーペア名が利用されます。
+
+#### region
+
+キーペアのリージョンを指定します。
+globalのregionより優先されます。
 
 #### key_file
 
@@ -291,6 +338,11 @@ cfndkで管理するスタックを定義します。
 stacksの配下には、管理するスタックのオリジナル名を定義します。
 通常は、stackを作成するとこの名称が利用されます。
 UUIDを利用すると、```[Stack Original Name]-[UUID]```のような形式のスタック名が利用されます。
+
+#### region
+
+スタックのリージョンを指定します。
+globalのregionより優先されます。
 
 #### template_file 
 
@@ -349,7 +401,7 @@ dependsを指定すると、create,update,create-or-changeset,destoryのコマ�
       - Stack2  
 ```
 
-#### timeout_in_minutes (デフォルト: 1)
+#### timeout_in_minutes
 
 スタックを作成する際などのタイムアウト時間を分で指定します。
 

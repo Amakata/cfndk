@@ -1,8 +1,10 @@
 require 'spec_helper'
 
 RSpec.describe 'CFnDK', type: :aruba do
-  before(:each) { prepend_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
-  before(:each) { prepend_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
+  before(:each) { set_environment_variable('AWS_REGION', ENV['AWS_REGION']) }
+  before(:each) { set_environment_variable('AWS_PROFILE', ENV['AWS_PROFILE']) }
+  before(:each) { set_environment_variable('AWS_ACCESS_KEY_ID', ENV["AWS_ACCESS_KEY_ID#{ENV['TEST_ENV_NUMBER']}"]) }
+  before(:each) { set_environment_variable('AWS_SECRET_ACCESS_KEY', ENV["AWS_SECRET_ACCESS_KEY#{ENV['TEST_ENV_NUMBER']}"]) }
   describe 'bin/cfndk' do
     before(:each) { setup_aruba }
     let(:file) { 'cfndk.yml' }
@@ -34,7 +36,7 @@ RSpec.describe 'CFnDK', type: :aruba do
       it 'displays version' do
         aggregate_failures do
           expect(last_command_started).to be_successfully_executed
-          expect(last_command_started).to have_output(/0.1.0/)
+          expect(last_command_started).to have_output(/0.1.1/)
         end
       end
     end

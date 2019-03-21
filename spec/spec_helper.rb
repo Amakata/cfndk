@@ -8,4 +8,7 @@ else
   ::Dir.glob(::File.expand_path('../support/**/*.rb', __FILE__)).each { |f| require_relative f }
 end
 
+ENV['AWS_ACCESS_KEY_ID'] = ENV["AWS_ACCESS_KEY_ID#{ENV['TEST_ENV_NUMBER']}"]
+ENV['AWS_SECRET_ACCESS_KEY'] = ENV["AWS_SECRET_ACCESS_KEY#{ENV['TEST_ENV_NUMBER']}"]
+
 require 'awspec'

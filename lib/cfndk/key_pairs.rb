@@ -3,6 +3,7 @@ module CFnDK
     def initialize(data, option, credentials)
       @option = option
       @credentials = credentials
+      @global_config = CFnDK::GlobalConfig.new(data, option)
       prepare_keypairs(data)
     end
 
@@ -26,7 +27,7 @@ module CFnDK
       @keypairs = {}
       return unless data['keypairs']
       data['keypairs'].each do |name, properties|
-        @keypairs[name] = KeyPair.new(name, properties, @option, @credentials)
+        @keypairs[name] = KeyPair.new(name, properties, @option, @global_config, @credentials)
       end
     end
   end
