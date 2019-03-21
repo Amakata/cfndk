@@ -53,6 +53,11 @@ jobs:
               
       # collect reports
       - store_test_results:
+          path: /home/circleci/repo/runtime.log
+      - store_artifacts:
+          path: /home/circleci/repo/runtime.log
+          destination: test-results
+      - store_test_results:
           path: /tmp/test-results
       - store_artifacts:
           path: /tmp/test-results
