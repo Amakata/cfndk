@@ -14,6 +14,7 @@ module CFnDK
       @option = option
       @client = Aws::CloudFormation::Client.new(credentials: credentials, region: @region)
       @s3_client = Aws::S3::Client.new(credentials: credentials, region: @region)
+      @sts_client = Aws::STS::Client.new(credentials: credentials, region: @region)
     end
 
     def create
@@ -497,14 +498,13 @@ module CFnDK
     private
 
     def upload_template_file
-      bucket = @region + '-' + @global_config.s3_template_bucket
       begin
-        @s3_client.head_bucket(bucket: bucket)
+        @s3_client.head_bucket(bucket: bucket_name)
       rescue Aws::S3::Errors::NotFound, Aws::S3::Errors::Forbidden
-        @s3_client.create_bucket(bucket: bucket)
-        CFnDK.logger.info('Creatt S3 bucket: ' + bucket)
+        @s3_client.create_bucket(bucket: bucket_name)
+        CFnDK.logger.info('Creatt S3 bucket: ' + bucket_name)
         @s3_client.put_bucket_lifecycle_configuration(
-          bucket: bucket,
+          bucket: bucket_name,
           lifecycle_configuration: {
             rules: [
               {
@@ -525,12 +525,17 @@ module CFnDK
       key = [@global_config.s3_template_hash, @template_file].compact.join('/')
       @s3_client.put_object(
         body: template_body,
-        bucket: bucket,
+        bucket: bucket_name,
         key: key
       )
-      url = "https://s3.amazonaws.com/#{bucket}/#{key}"
+      url = "https://s3.amazonaws.com/#{bucket_name}/#{key}"
       CFnDK.logger.info('Put S3 object: ' + url)
       url
+    end
+
+    def bucket_name
+      resp = @sts_client.get_caller_identity({})
+      resp.account + '-' + @region + '-' + @global_config.s3_template_bucket
     end
 
     def colored_status(str)

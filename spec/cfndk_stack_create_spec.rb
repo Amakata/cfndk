@@ -117,12 +117,12 @@ RSpec.describe 'CFnDK', type: :aruba do
                   expect(last_command_started).to have_output(/INFO validate stack: Test$/)
                   expect(last_command_started).to have_output(/INFO creating stack: Test$/)
                   expect(last_command_started).to have_output(/INFO created stack: Test$/)
-                  expect(last_command_started).not_to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/ap-northeast-1-cfndk-templates})
+                  expect(last_command_started).not_to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates})
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
-            context 'with a 51201byte template stack' do
+            context 'with a 51201byte template stack', big: true do
               yaml = <<-"YAML"
               global:
               stacks:
@@ -142,7 +142,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   expect(last_command_started).to have_output(/INFO validate stack: Test$/)
                   expect(last_command_started).to have_output(/INFO creating stack: Test$/)
                   expect(last_command_started).to have_output(/INFO created stack: Test$/)
-                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/ap-northeast-1-cfndk-templates})
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates})
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
