@@ -42,8 +42,8 @@ jobs:
             export AWS_REGION=ap-northeast-1
             CFNDK_COVERAGE=1 bundle exec parallel_rspec \
               -n ${PARALLEL_TESTS_CONCURRENCY} \
+              --runtime-log /home/circleci/repo/tmp/parallel_runtime_rspec.log \
               spec/cfndk_spec.rb spec/cfndk_stack_spec.rb
-            cat /home/circleci/repo/tmp/parallel_runtime_rspec.log
 
       - save_cache:
           paths:
