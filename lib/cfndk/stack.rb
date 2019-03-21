@@ -500,7 +500,7 @@ module CFnDK
       bucket = @region + '-' + @global_config.s3_template_bucket
       begin
         @s3_client.head_bucket(bucket: bucket)
-      rescue Aws::S3::Errors::NotFound
+      rescue Aws::S3::Errors::NotFound, Aws::S3::Errors::Forbidden
         @s3_client.create_bucket(bucket: bucket)
         CFnDK.logger.info('Creatt S3 bucket: ' + bucket)
         @s3_client.put_bucket_lifecycle_configuration(
