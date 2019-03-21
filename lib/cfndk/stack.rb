@@ -311,8 +311,14 @@ module CFnDK
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
       CFnDK.logger.info(('validate stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + @name)
+      hash = {}
+      if large_template?
+        hash[:template_url] = upload_template_file()
+      else
+        hash[:template_body] = template_body()
+      end
       @client.validate_template(
-        template_body: template_body
+        hash
       )
     end
 
