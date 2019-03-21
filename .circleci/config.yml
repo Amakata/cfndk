@@ -37,11 +37,6 @@ jobs:
           name: run tests
           command: |
             export AWS_REGION=ap-northeast-1
-            export AWS_ACCESS_KEY_ID_NAME=AWS_ACCESS_KEY_ID${TEST_ENV_NUMBER}
-            export AWS_SECRET_ACCESS_KEY_NAME=AWS_SECRET_ACCESS_KEY${TEST_ENV_NUMBER}
-            export AWS_ACCESS_KEY_ID=${!AWS_ACCESS_KEY_ID_NAME}
-            export AWS_SECRET_ACCESS_KEY=${!AWS_SECRET_ACCESS_KEY_NAME}
-            echo $AWS_ACCESS_KEY_ID
             CFNDK_COVERAGE=1 bundle exec parallel_rspec \
               -n ${PARALLEL_TESTS_CONCURRENCY} \
               spec
