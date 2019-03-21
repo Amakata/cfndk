@@ -21,6 +21,9 @@ jobs:
             - v1-dependencies-{{ checksum "~/repo/Gemfile.lock" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
+      - restore_cache:
+          keys:
+            - v1-runtime-log
 
       - run:
           name: install dependencies
@@ -31,6 +34,10 @@ jobs:
           paths:
             - ~/repo/vendor/bundle
           key: v1-dependencies-{{ checksum "~/repo/Gemfile.lock" }}
+      - save_cache:
+          paths:
+            - ~/repo/runtime.log
+          key: v1-runtime-log
 
       # run tests!
       - run:
@@ -39,6 +46,7 @@ jobs:
             export AWS_REGION=ap-northeast-1
             CFNDK_COVERAGE=1 bundle exec parallel_rspec \
               -n ${PARALLEL_TESTS_CONCURRENCY} \
+              --runtime-log runtime.log \
               spec
               
       # collect reports
