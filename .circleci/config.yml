@@ -42,12 +42,13 @@ jobs:
             export AWS_REGION=ap-northeast-1
             CFNDK_COVERAGE=1 bundle exec parallel_rspec \
               -n ${PARALLEL_TESTS_CONCURRENCY} \
-              --runtime-log runtime.log \
+              --runtime-log /home/circleci/repo/runtime.log \
               spec
+            cat /home/circleci/repo/runtime.log
 
       - save_cache:
           paths:
-            - ~/repo/runtime.log
+            - /home/circleci/repo/runtime.log
           key: v1-runtime-log
               
       # collect reports
