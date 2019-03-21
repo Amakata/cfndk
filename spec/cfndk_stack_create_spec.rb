@@ -76,6 +76,7 @@ RSpec.describe 'CFnDK', type: :aruba do
 
             context 'with a stack' do
               yaml = <<-"YAML"
+              global:
               stacks:
                 Test:
                   template_file: vpc.yaml
