@@ -9,13 +9,13 @@ RSpec.describe 'CFnDK', type: :aruba do
     before(:each) { setup_aruba }
     let(:file) { 'cfndk.yml' }
     let(:file2) { 'cfndk2.yml' }
-    let(:pem) { 'test.pem' }
     let(:uuid) { '38437346-c75c-47c5-83b4-d504f85e275b' }
+    let(:change_set_uuid) { '38437346-c75c-47c5-83b4-d504f85e27ca' }
 
-    describe 'stack' do
+    describe 'changeset' do
       describe 'create', create: true do
         context 'without cfndk.yml' do
-          before(:each) { run_command('cfndk stack create') }
+          before(:each) { run_command('cfndk changeset create') }
           it 'displays file does not exist error and status code = 1' do
             aggregate_failures do
               expect(last_command_started).to have_exit_status(1)
@@ -30,17 +30,7 @@ RSpec.describe 'CFnDK', type: :aruba do
           YAML
           before(:each) { write_file(file2, yaml) }
           context 'when -c cfndk2.yml and empty stacks' do
-            before(:each) { run_command("cfndk stack create -c=#{file2}") }
-            it 'displays empty stack log' do
-              aggregate_failures do
-                expect(last_command_started).to be_successfully_executed
-                expect(last_command_started).to have_output(/INFO create.../)
-              end
-            end
-          end
-
-          context 'when --config-path cfndk2.yml and empty stacks' do
-            before(:each) { run_command("cfndk stack create --config-path=#{file2}") }
+            before(:each) { run_command("cfndk changeset create -c=#{file2}") }
             it 'displays empty stack log' do
               aggregate_failures do
                 expect(last_command_started).to be_successfully_executed
@@ -53,7 +43,7 @@ RSpec.describe 'CFnDK', type: :aruba do
         context 'with cfndk.yml' do
           context 'when cfndk.yml is empty' do
             before(:each) { touch(file) }
-            before(:each) { run_command('cfndk stack create') }
+            before(:each) { run_command('cfndk changeset create') }
             it 'displays File is empty error and status code = 1' do
               aggregate_failures do
                 expect(last_command_started).to have_exit_status(1)
@@ -65,8 +55,8 @@ RSpec.describe 'CFnDK', type: :aruba do
           context 'with stacks:' do
             context 'without stack' do
               before(:each) { write_file(file, 'stacks:') }
-              before(:each) { run_command('cfndk stack create') }
-              it do
+              before(:each) { run_command('cfndk changeset create') }
+              it 'displays create log' do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed
                   expect(last_command_started).to have_output(/INFO create.../)
@@ -85,13 +75,13 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { run_command('cfndk stack create') }
-              it do
+              before(:each) { run_command('cfndk changeset create') }
+              it 'displays created log' do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed
                   expect(last_command_started).to have_output(/INFO validate stack: Test$/)
-                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
-                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                  expect(last_command_started).to have_output(/INFO created change set: Test$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -115,16 +105,16 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { copy('%/vpc.json', 'vpc.json') }
               before(:each) { copy('%/sg.yaml', 'sg.yaml') }
               before(:each) { copy('%/sg.json', 'sg.json') }
-              before(:each) { run_command('cfndk stack create') }
-              it do
+              before(:each) { run_command('cfndk changeset create') }
+              it 'displays created logs' do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed
                   expect(last_command_started).to have_output(/INFO validate stack: Test$/)
-                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
-                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                  expect(last_command_started).to have_output(/INFO created change set: Test$/)
                   expect(last_command_started).to have_output(/INFO validate stack: Test2$/)
-                  expect(last_command_started).to have_output(/INFO creating stack: Test2$/)
-                  expect(last_command_started).to have_output(/INFO created stack: Test2$/)
+                  expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                  expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -148,11 +138,16 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { copy('%/vpc.json', 'vpc.json') }
               before(:each) { copy('%/sg.yaml', 'sg.yaml') }
               before(:each) { copy('%/sg.json', 'sg.json') }
-              before(:each) { run_command('cfndk stack create') }
-              it do
+              before(:each) { run_command('cfndk changeset create') }
+              it 'displays created logs' do
                 aggregate_failures do
-                  expect(last_command_started).to have_exit_status(1)
-                  expect(last_command_started).to have_output(/ERROR Aws::Waiters::Errors::FailureStateError: stopped waiting, encountered a failure state$/)
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                  expect(last_command_started).to have_output(/INFO created change set: Test$/)
+                  expect(last_command_started).to have_output(/INFO validate stack: Test2$/)
+                  expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                  expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -178,8 +173,8 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { copy('%/vpc.json', 'vpc.json') }
               before(:each) { copy('%/sg.yaml', 'sg.yaml') }
               before(:each) { copy('%/sg.json', 'sg.json') }
-              before(:each) { run_command('cfndk stack create') }
-              it do
+              before(:each) { run_command('cfndk changeset create') }
+              it 'displays cyclic dependency error and exit code = 1' do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
                   expect(last_command_started).to have_output(/ERROR RuntimeError: There are cyclic dependency or stack doesn't exist. unprocessed_stack: Test,Test2$/)
@@ -199,8 +194,8 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/iam.yaml', 'iam.yaml') }
               before(:each) { copy('%/iam.json', 'iam.json') }
-              before(:each) { run_command('cfndk stack create') }
-              it do
+              before(:each) { run_command('cfndk changeset create') }
+              it 'displays Requires capabilities error and exit code = 1' do
                 aggregate_failures do
                   expect(last_command_started).to have_exit_status(1)
                   expect(last_command_started).to have_output(/ERROR Aws::CloudFormation::Errors::InsufficientCapabilitiesException: Requires capabilities : \[CAPABILITY_NAMED_IAM\]/)
@@ -222,11 +217,11 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/iam.yaml', 'iam.yaml') }
               before(:each) { copy('%/iam.json', 'iam.json') }
-              before(:each) { run_command('cfndk stack create') }
+              before(:each) { run_command('cfndk changeset create') }
               it do
                 aggregate_failures do
                   expect(last_command_started).to be_successfully_executed
-                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created change set: Test$/)
                 end
               end
               after(:each) { run_command('cfndk destroy -f') }
@@ -254,16 +249,16 @@ RSpec.describe 'CFnDK', type: :aruba do
                 before(:each) { copy('%/vpc.json', 'vpc.json') }
                 before(:each) { copy('%/sg.yaml', 'sg.yaml') }
                 before(:each) { copy('%/sg.json', 'sg.json') }
-                before(:each) { run_command("cfndk stack create -u=#{uuid}") }
+                before(:each) { run_command("cfndk changeset create -u=#{uuid}") }
                 it do
                   aggregate_failures do
                     expect(last_command_started).to be_successfully_executed
                     expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test$/)
                     expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
-                    expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                   end
                 end
                 after(:each) { run_command("cfndk destroy -f -u=#{uuid}") }
@@ -292,16 +287,16 @@ RSpec.describe 'CFnDK', type: :aruba do
                   before(:each) { copy('%/vpc.json', 'vpc.json') }
                   before(:each) { copy('%/sg.yaml', 'sg.yaml') }
                   before(:each) { copy('%/sg.json', 'sg.json') }
-                  before(:each) { run_command('cfndk stack create') }
+                  before(:each) { run_command('cfndk changeset create') }
                   it do
                     aggregate_failures do
                       expect(last_command_started).to be_successfully_executed
                       expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test$/)
                       expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                     end
                   end
                   after(:each) { run_command('cfndk destroy -f') }
@@ -328,17 +323,17 @@ RSpec.describe 'CFnDK', type: :aruba do
                   before(:each) { copy('%/vpc.json', 'vpc.json') }
                   before(:each) { copy('%/sg.yaml', 'sg.yaml') }
                   before(:each) { copy('%/sg.json', 'sg.json') }
-                  before(:each) { run_command('cfndk stack create --stack-names=Test') }
+                  before(:each) { run_command('cfndk changeset create --stack-names=Test') }
                   it do
                     aggregate_failures do
                       expect(last_command_started).to be_successfully_executed
                       expect(last_command_started).to have_output(/INFO create.../)
                       expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test$/)
                       expect(last_command_started).not_to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO creating stack: Test2-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO created stack: Test2-#{uuid}$/)
+                      expect(last_command_started).not_to have_output(/INFO creating change set: Test2$/)
+                      expect(last_command_started).not_to have_output(/INFO created change set: Test2$/)
                     end
                   end
                   after(:each) { run_command('cfndk destroy -f') }
@@ -375,24 +370,61 @@ RSpec.describe 'CFnDK', type: :aruba do
                   before(:each) { copy('%/sg.json', 'sg.json') }
                   before(:each) { copy('%/iam.yaml', 'iam.yaml') }
                   before(:each) { copy('%/iam.json', 'iam.json') }
-                  before(:each) { run_command('cfndk stack create --stack-names=Test Test2') }
+                  before(:each) { run_command('cfndk changeset create --stack-names=Test Test2') }
                   it do
                     aggregate_failures do
                       expect(last_command_started).to be_successfully_executed
                       expect(last_command_started).to have_output(/INFO create.../)
                       expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating stack: Test-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created stack: Test-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test$/)
                       expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO creating stack: Test2-#{uuid}$/)
-                      expect(last_command_started).to have_output(/INFO created stack: Test2-#{uuid}$/)
+                      expect(last_command_started).to have_output(/INFO creating change set: Test2$/)
+                      expect(last_command_started).to have_output(/INFO created change set: Test2$/)
                       expect(last_command_started).not_to have_output(/INFO validate stack: Test3-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO creating stack: Test3-#{uuid}$/)
-                      expect(last_command_started).not_to have_output(/INFO created stack: Test3-#{uuid}$/)
+                      expect(last_command_started).not_to have_output(/INFO creating change set: Test3$/)
+                      expect(last_command_started).not_to have_output(/INFO created change set: Test3$/)
                     end
                   end
                   after(:each) { run_command('cfndk destroy -f') }
                 end
+              end
+
+              context 'when -u 38437346-c75c-47c5-83b4-d504f85e275b and --change-set-uuid 38437346-c75c-47c5-83b4-d504f85e275c' do
+                yaml = <<-"YAML"
+                stacks:
+                  Test:
+                    template_file: vpc.yaml
+                    parameter_input: vpc.json
+                    parameters:
+                      VpcName: sample<%= append_uuid%>
+                    timeout_in_minutes: 2
+                  Test2:
+                    template_file: sg.yaml
+                    parameter_input: sg.json
+                    parameters:
+                      VpcName: sample<%= append_uuid%>
+                    depends:
+                      - Test
+                YAML
+                before(:each) { write_file(file, yaml) }
+                before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+                before(:each) { copy('%/vpc.json', 'vpc.json') }
+                before(:each) { copy('%/sg.yaml', 'sg.yaml') }
+                before(:each) { copy('%/sg.json', 'sg.json') }
+                before(:each) { run_command("cfndk changeset create -u=#{uuid} --change-set-uuid 38437346-c75c-47c5-83b4-d504f85e275c") }
+                it do
+                  aggregate_failures do
+                    expect(last_command_started).to be_successfully_executed
+                    expect(last_command_started).to have_output(/INFO validate stack: Test-#{uuid}$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test-38437346-c75c-47c5-83b4-d504f85e275c$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test-38437346-c75c-47c5-83b4-d504f85e275c$/)
+                    expect(last_command_started).to have_output(/INFO validate stack: Test2-#{uuid}$/)
+                    expect(last_command_started).to have_output(/INFO creating change set: Test2-38437346-c75c-47c5-83b4-d504f85e275c$/)
+                    expect(last_command_started).to have_output(/INFO created change set: Test2-38437346-c75c-47c5-83b4-d504f85e275c$/)
+                  end
+                end
+                after(:each) { run_command("cfndk destroy -f -u=#{uuid}") }
               end
             end
           end
