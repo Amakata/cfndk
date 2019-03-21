@@ -33,7 +33,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-runtime-log
+            - v2-runtime-log
 
       # run tests!
       - run:
@@ -48,7 +48,7 @@ jobs:
       - save_cache:
           paths:
             - /home/circleci/repo/tmp/parallel_runtime_rspec.log
-          key: v1-runtime-log
+          key: v2-runtime-log
               
       # collect reports
       - store_test_results:
