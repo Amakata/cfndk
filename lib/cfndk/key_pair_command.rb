@@ -7,6 +7,7 @@ module CFnDK
     class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
     class_option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     class_option :keypair_names, type: :array, desc: 'Target keypair names'
+    class_option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
 
     desc 'create', 'Create keypair'
     option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'

@@ -11,6 +11,7 @@ module CFnDK
     desc 'create', 'Create stack'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
@@ -31,6 +32,7 @@ module CFnDK
     desc 'update', 'Update stack'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def update
       CFnDK.logger.info 'update...'.color(:green)
       data = load_config_data(options)
@@ -51,6 +53,7 @@ module CFnDK
     desc 'destroy', 'Destroy stack'
     option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
