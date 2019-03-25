@@ -9,24 +9,32 @@ module CFnDK
       @region = data['region'] || @global_config.region
       @option = option
       @client = Aws::EC2::Client.new(credentials: credentials, region: @region)
+      @dryrun = File.open(@option['dry_run'], 'a') if @option['dry_run']
     end
 
     def create
       CFnDK.logger.info(('creating keypair: ' + name).color(:green))
-      key_pair = @client.create_key_pair(
-        key_name: name
-      )
+      if @dryrun
+        @dryrun.puts "aws ec2 create-key-pair --key-name #{name}"
+      else
+        key_pair = @client.create_key_pair(
+          key_name: name
+        )
+        create_key_file(key_pair)
+      end
       CFnDK.logger.info(('created keypair: ' + name).color(:green))
-
-      create_key_file(key_pair)
     end
 
     def destroy
       if exists?
         CFnDK.logger.info(('deleting keypair: ' + name).color(:green))
-        @client.delete_key_pair(
-          key_name: name
-        )
+        if @dryrun
+          @dryrun.puts "aws ec2 delete-key-pair --key-name #{name}"
+        else
+          @client.delete_key_pair(
+            key_name: name
+          )
+        end
         CFnDK.logger.info(('deleted keypair: ' + name).color(:green))
       else
         CFnDK.logger.info(('do not delete keypair: ' + name).color(:red))
