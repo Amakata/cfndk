@@ -1,6 +1,6 @@
 module CFnDK
   class Stack
-    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region
+    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn
     def initialize(name, data, option, global_config, credentials)
       @global_config = global_config
       @name = name
@@ -9,6 +9,7 @@ module CFnDK
       @capabilities = data['capabilities'] || []
       @depends = data['depends'] || []
       @region = data['region'] || @global_config.region
+      @role_arn = @global_config.role_arn
       @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
       @override_parameters = data['parameters'] || {}
       @option = option
@@ -42,6 +43,7 @@ module CFnDK
         timeout_in_minutes: timeout_in_minutes,
         tags: tags,
       }
+      hash[:role_arn] = @role_arn if @role_arn
       if large_template?
         hash[:template_url] = upload_template_file()
       else
@@ -86,6 +88,7 @@ module CFnDK
           parameters: parameters,
           capabilities: capabilities,
         }
+        hash[:role_arn] = @role_arn if @role_arn
         if large_template?
           hash[:template_url] = upload_template_file()
         else
@@ -125,8 +128,12 @@ module CFnDK
         CFnDK.logger.info(('deleting stack: ' + name).color(:green))
         CFnDK.logger.debug('Name        :' + name)
         CFnDK.logger.debug('Region      :' + region)
+        hash = {
+          stack_name: name,
+        }
+        hash[:role_arn] = @role_arn if @role_arn
         @client.delete_stack(
-          stack_name: name
+          hash
         )
       else
         CFnDK.logger.info(('do not delete stack: ' + name).color(:red))
@@ -175,6 +182,7 @@ module CFnDK
         change_set_type: exits? ? 'UPDATE' : 'CREATE',
         tags: tags,
       }
+      hash[:role_arn] = @role_arn if @role_arn
       if large_template?
         hash[:template_url] = upload_template_file()
       else
