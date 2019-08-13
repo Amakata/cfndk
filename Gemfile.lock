@@ -1,8 +1,9 @@
 PATH
   remote: .
   specs:
-    cfndk (0.1.1.1)
+    cfndk (0.1.1.2)
       aws-sdk
+      bundler
       camelizable
       rainbow
       terminal-table
@@ -800,7 +801,6 @@ PLATFORMS
 DEPENDENCIES
   aruba
   awspec
-  bundler
   cfndk!
   parallel_tests
   rake
