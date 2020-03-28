@@ -1,0 +1,39 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Stack1",
+  "Parameters": {
+    "VpcName": {
+      "Description": "Name for this VPC",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "Vpc": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "192.168.0.0/24",
+        "EnableDnsHostnames": true,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "${VpcName}-VPC"
+            }
+          }
+        ]
+      }
+    },
+    "SgStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "Parameters": {
+          "VpcId": {
+            "Ref": "Vpc"
+          }
+        },
+        "TemplateURL": "./nested_stack.json",
+        "TimeoutInMinutes": 2
+      }
+    }
+  }
+}
