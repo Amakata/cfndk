@@ -38,7 +38,7 @@ module CFnDK
         if is_json?(orgTemplate)
           data = JSON.parse(orgTemplate)
         else
-          data = YAML.safe_load(orgTemplate.gsub(/!/, '____CFNDK!____'))
+          data = YAML.load(orgTemplate.gsub(/!/, '____CFNDK!____'))
         end
         
         if data['Resources']
