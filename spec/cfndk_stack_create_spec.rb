@@ -109,7 +109,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { append_to_file('vpc.yaml', ' ' * (51200 - file_size('vpc.yaml').to_i)) }
+              before(:each) { append_to_file('vpc.yaml', "\n" + '#' * (51200 - 2 - file_size('vpc.yaml').to_i)) }
               before(:each) { run_command('cfndk stack create') }
               it 'displays created stack log' do
                 aggregate_failures do
@@ -134,7 +134,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { append_to_file('vpc.yaml', ' ' * (51200 + 1 - file_size('vpc.yaml').to_i)) }
+              before(:each) { append_to_file('vpc.yaml', "\n" + '#' * (51200 + 1 - 2 - file_size('vpc.yaml').to_i)) }
               before(:each) { run_command('cfndk stack create') }
               it 'displays created stack log' do
                 aggregate_failures do
