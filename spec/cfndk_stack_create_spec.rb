@@ -107,9 +107,8 @@ RSpec.describe 'CFnDK', type: :aruba do
                   timeout_in_minutes: 2
               YAML
               before(:each) { write_file(file, yaml) }
-              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/big_vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { append_to_file('vpc.yaml', "\n" + '#' * (51200 - 2 - file_size('vpc.yaml').to_i)) }
               before(:each) { run_command('cfndk stack create') }
               it 'displays created stack log' do
                 aggregate_failures do
@@ -122,7 +121,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
-            context 'with a 51201byte template stack', big: true do
+            context 'with a 51201byte template stack', big: true, bigbig: true do
               yaml = <<-"YAML"
               global:
               stacks:
@@ -132,9 +131,9 @@ RSpec.describe 'CFnDK', type: :aruba do
                   timeout_in_minutes: 2
               YAML
               before(:each) { write_file(file, yaml) }
-              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/big_vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { append_to_file('vpc.yaml', "\n" + '#' * (51200 + 1 - 2 - file_size('vpc.yaml').to_i)) }
+              before(:each) { append_to_file('vpc.yaml', '1') }
               before(:each) { run_command('cfndk stack create') }
               it 'displays created stack log' do
                 aggregate_failures do

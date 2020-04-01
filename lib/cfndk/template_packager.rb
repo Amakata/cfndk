@@ -66,6 +66,7 @@ module CFnDK
           @template_body = YAML.dump_stream(data).gsub(/____CFNDK!____/, '!')
         end
       end
+      CFnDK.logger.debug('Package Template size:' + @template_body.size.to_s)
       CFnDK.logger.debug('Package Template:' + @template_body)
       @template_body
     end
