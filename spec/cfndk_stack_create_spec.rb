@@ -279,8 +279,8 @@ RSpec.describe 'CFnDK', type: :aruba do
                   package: true
               YAML
               before(:each) { write_file(file, yaml) }
-              before(:each) { copy('%/lambda_function.yaml', 'lambda_function.yaml') }
-              before(:each) { copy('%/lambda_function.json', 'lambda_function.json') }
+              before(:each) { copy('%/lambda_function/lambda_function.yaml', 'lambda_function.yaml') }
+              before(:each) { copy('%/lambda_function/lambda_function.json', 'lambda_function.json') }
               before(:each) { copy('%/lambda_function/index.js', 'lambda_function/index.js') }
               before(:each) { run_command('cfndk stack create') }
               it 'displays created stack log' do
@@ -294,6 +294,35 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
+            context 'with serverless function and zip file', serverless_function: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: serverless_function.yaml
+                  parameter_input: serverless_function.json
+                  timeout_in_minutes: 2
+                  capabilities:
+                    - CAPABILITY_AUTO_EXPAND
+                    - CAPABILITY_IAM
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/serverless_function/serverless_function.yaml', 'serverless_function.yaml') }
+              before(:each) { copy('%/serverless_function/serverless_function.json', 'serverless_function.json') }
+              before(:each) { copy('%/serverless_function/index.js', 'serverless_function/index.js') }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/serverless_function.zip})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end            
             context 'with two stacks' do
               yaml = <<-"YAML"
               stacks:

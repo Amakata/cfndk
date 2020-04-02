@@ -59,8 +59,20 @@ module CFnDK
               end
             when 'AWS::Lambda::Function' then
               if properties['Code'].kind_of?(String)
-                v['Properties']['Code'] = upload_zip_file(File.dirname(@template_file) + '/' + properties['Code'].sub(/^\s*.\//, ''))
+                result = upload_zip_file(File.dirname(@template_file) + '/' + properties['Code'].sub(/^\s*.\//, ''))
+                v['Properties']['Code'] = {
+                  'S3Bucket' => result['bucket'],
+                  'S3Key' => result['key']  
+                }
               end
+            when 'AWS::Serverless::Function' then
+              if properties['CodeUri'].kind_of?(String)
+                result = upload_zip_file(File.dirname(@template_file) + '/' + properties['CodeUri'].sub(/^\s*.\//, ''))
+                v['Properties']['CodeUri'] = {
+                  'Bucket' => result['bucket'],
+                  'Key' => result['key']  
+                }
+              end  
             end
           end
         end
@@ -129,7 +141,7 @@ module CFnDK
 
     def upload_zip_file(path)
       create_bucket
-      key = [@global_config.s3_template_hash, path + ".zip"].compact.join('/')
+      key = [@global_config.s3_template_hash, path.sub(/^.\//, '') + ".zip"].compact.join('/')
 
 
       buffer = Zip::OutputStream.write_buffer do |out|
@@ -149,8 +161,8 @@ module CFnDK
       url = "https://s3.amazonaws.com/#{bucket_name}/#{key}"
       CFnDK.logger.info('Put S3 object: ' + url)
       {
-        'S3Bucket' => bucket_name,
-        'S3Key' => key
+        'bucket' => bucket_name,
+        'key' => key
       }
     end
 
