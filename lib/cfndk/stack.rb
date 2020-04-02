@@ -1,6 +1,6 @@
 module CFnDK
   class Stack
-    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn
+    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn, :package
     def initialize(name, data, option, global_config, credentials)
       @global_config = global_config
       @name = name
@@ -10,13 +10,14 @@ module CFnDK
       @depends = data['depends'] || []
       @region = data['region'] || @global_config.region
       @role_arn = @global_config.role_arn
+      @package = data['package'] || @global_config.package 
       @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
       @override_parameters = data['parameters'] || {}
       @option = option
       @client = Aws::CloudFormation::Client.new(credentials: credentials, region: @region)
       @s3_client = Aws::S3::Client.new(credentials: credentials, region: @region)
       @sts_client = Aws::STS::Client.new(credentials: credentials, region: @region)
-      @tp = CFnDK::TemplatePackager.new(@template_file, @region, @global_config, @s3_client, @sts_client)
+      @tp = CFnDK::TemplatePackager.new(@template_file, @region, @package, @global_config, @s3_client, @sts_client)
     end
 
     def create

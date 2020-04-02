@@ -154,6 +154,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   template_file: vpc.yaml
                   parameter_input: vpc.json
                   timeout_in_minutes: 2
+                  package: true
               YAML
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/stack.yaml', 'vpc.yaml') }
@@ -179,6 +180,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   template_file: vpc.yaml
                   parameter_input: vpc.json
                   timeout_in_minutes: 2
+                  package: true
               YAML
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/stack.yaml', 'vpc.yaml') }
@@ -220,6 +222,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   template_file: vpc.template.json
                   parameter_input: vpc.json
                   timeout_in_minutes: 2
+                  package: true
               YAML
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/stack.template.json', 'vpc.template.json') }
@@ -247,6 +250,7 @@ RSpec.describe 'CFnDK', type: :aruba do
                   timeout_in_minutes: 2
                   capabilities:
                     - CAPABILITY_IAM
+                  package: true
               YAML
               before(:each) { write_file(file, yaml) }
               before(:each) { copy('%/lambda_function.yaml', 'lambda_function.yaml') }

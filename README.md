@@ -1,6 +1,7 @@
 # AWS CloudFormation Development Kit
 
 This is easy operation/integration support tool for AWS CloudFormation.
+This tool drives DevOps and Infrastructure as Code.
 
 [![CircleCI](https://circleci.com/gh/Amakata/cfndk/tree/master.svg?style=svg)](https://circleci.com/gh/Amakata/cfndk/tree/master)
 
@@ -21,15 +22,16 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 * チェンジセットの作成/実行/削除/レポート(experimental)
 * Keypair/スタック毎のregionのサポート
 * 512000バイト以上の大きなテンプレートファイルの場合に自動的にS3にテンプレートファイルをアップロードして処理する機能
+* aws cloudformation package相当の機能(nested templateやlambda functionの自動アップロード)
 * cfndk全体での共通設定
 
-## インストール
+## Install
 
 ```
 $ gem install cfndk
 ```
 
-## 使い方
+## Usage
 
 ```
 $ mkdir cfn-project
@@ -42,7 +44,7 @@ $ cfndk report
 $ cfndk destroy -f
 ```
 
-## Credentials設定
+## Credentials configuration
 
 次の順番でCredentialsを評価して最初に有効なCredentialsを使用します。
 
@@ -57,7 +59,7 @@ $ cfndk destroy -f
 4. EC2/ECS Instance ProfileによるCredentials
    * AWS_CONTAINER_CREDENTIALS_RELATIVE_URI環境変数が設定された場合のみECSが使われます。
 
-## コマンド
+## Command
 
 ### ```init```
 
@@ -143,7 +145,7 @@ cfndk changeset help
 
 で確認できます。
 
-### 主なoption
+### option
 
 #### ```-v --verbose```
 
@@ -200,7 +202,7 @@ UUIDが指定されるとチェンジセット名に付加されます。
 他にもオプションはあります。
 詳細はコマンドヘルプを参照してください。
 
-## 環境変数
+## Environment Variables
 
 ### ```CFNDK_UUID```
 
@@ -220,6 +222,7 @@ global:
   region: ap-northeast-1
   s3_template_bucket: cfndk-templates
   timeout_in_minutes: 10
+  package: true
 keypairs:
   Key1:
     region: us-east-1
@@ -232,6 +235,7 @@ stacks:
     parameter_input: stack1/env.json
     parameters:
       VpcName: Prod<%= append_uuid %>
+    package: true
   Stack2:
     template_file: stack2/stack2.yaml 
     parameter_input: stack2/env.json
@@ -241,7 +245,7 @@ stacks:
       - CAPABILITY_IAM
       - CAPABILITY_NAMED_IAM
     depends:
-      - Stack1      
+      - Stack1
     timeout_in_minutes: 10
 ```
 
@@ -250,6 +254,7 @@ global:
   region: [String]
   s3_template_bucket: [String]
   timeout_in_minutes: [Integer]
+  package: [Boolean]
 keypairs:
   [String]:
     region: [String]
@@ -268,7 +273,8 @@ stacks:
     timeout_in_minutes: [Integer]
     depends:
       - [String]
-      - [String]      
+      - [String]
+    package: [Boolean]
 ```
 
 ### ```global:```
@@ -297,6 +303,25 @@ AWS_REGIONも指定されない場合はus-east-1を利用します。
 regionはスタック毎で指定されたものを利用します。
 
 S3バケットは一日で自動的に中身のオブジェクトが削除されるように設定されます。
+
+#### package (デフォルト: false)
+
+trueを指定した場合に、
+スタックのテンプレートで、ネステッドスタックや、CloudFormationのコードがローカルパス形式で指定されている場合に
+```aws cloudformation package```
+相当の処理を行います。
+
+yaml、jsonの意図しない加工がされる可能性があるためデフォルトではfalseとなっています。
+
+例えば、```package: true```を指定して下記の様に記述すると、 ```./lambda_function``` フォルダをzipアーカイブしてS3にアップロードし、Codeを適切なS3のパスに更新します。
+
+```
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: ./lambda_function
+```
+
 
 ### ```keypairs:```
 
@@ -401,6 +426,24 @@ dependsを指定すると、create,update,create-or-changeset,destoryのコマ�
       - Stack2  
 ```
 
+#### package
+
+trueを指定した場合に、
+スタックのテンプレートで、ネステッドスタックや、CloudFormationのコードがローカルパス形式で指定されている場合に
+```aws cloudformation package```
+相当の処理を行います。
+
+yaml、jsonの意図しない加工がされる可能性があるためデフォルトではfalseとなっています。
+
+例えば、```package: true```を指定して下記の様に記述すると、 ```./lambda_function``` フォルダをzipアーカイブしてS3にアップロードし、Codeを適切なS3のパスに更新します。
+
+```
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: ./lambda_function
+```
+
 #### timeout_in_minutes
 
 スタックを作成する際などのタイムアウト時間を分で指定します。
@@ -428,7 +471,7 @@ dependsを指定すると、create,update,create-or-changeset,destoryのコマ�
     オプション```--properties```で指定したキーに対応する値を参照することができます。
 
 
-## テスト
+## Test
 
 cfndkコマンドのテストを行うことができます。
 CFNDK_COVERAGE環境変数に1を設定することで、カバレッジを取ることができます。

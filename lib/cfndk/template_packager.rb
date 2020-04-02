@@ -1,8 +1,9 @@
 module CFnDK
   class TemplatePackager
-    def initialize(template_file, region, global_config, s3_client, sts_client)
+    def initialize(template_file, region, package, global_config, s3_client, sts_client)
       @template_file = template_file
       @region = region
+      @package = package
       @global_config = global_config
       @s3_client = s3_client
       @sts_client = sts_client
@@ -33,6 +34,10 @@ module CFnDK
 
     def package_templte
       if !@template_body
+        if !@package
+          @template_body = File.open(@template_file, 'r').read
+          return @template_body
+        end
         orgTemplate = File.open(@template_file, 'r').read
         CFnDK.logger.debug('Original Template:' + orgTemplate)
         if is_json?(orgTemplate)
@@ -49,7 +54,7 @@ module CFnDK
             case t
             when 'AWS::CloudFormation::Stack' then
               if properties['TemplateURL'] =~ /^\s*./
-                tp = TemplatePackager.new(properties['TemplateURL'].sub(/^\s*.\//, ''), @region, @global_config, @s3_client, @sts_client)
+                tp = TemplatePackager.new(properties['TemplateURL'].sub(/^\s*.\//, ''), @region, @package, @global_config, @s3_client, @sts_client)
                 v['Properties']['TemplateURL'] = tp.upload_template_file
               end
             when 'AWS::Lambda::Function' then
@@ -65,9 +70,9 @@ module CFnDK
         else
           @template_body = YAML.dump_stream(data).gsub(/____CFNDK!____/, '!')
         end
+        CFnDK.logger.debug('Package Template size:' + @template_body.size.to_s)
+        CFnDK.logger.debug('Package Template:' + @template_body)
       end
-      CFnDK.logger.debug('Package Template size:' + @template_body.size.to_s)
-      CFnDK.logger.debug('Package Template:' + @template_body)
       @template_body
     end
     
