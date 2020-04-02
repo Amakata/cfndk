@@ -5,6 +5,7 @@ PATH
       aws-sdk
       bundler
       camelizable
+      diff-lcs
       rainbow
       rubyzip (= 1.3.0)
       terminal-table
@@ -809,4 +810,4 @@ DEPENDENCIES
   simplecov
 
 BUNDLED WITH
-   1.14.6
+   2.0.2

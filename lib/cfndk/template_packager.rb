@@ -105,7 +105,9 @@ module CFnDK
         else
           @template_body = YAML.dump_stream(data).gsub(/____CFNDK!____/, '!')
         end
-        CFnDK.logger.debug('Package Template size:' + @template_body.size.to_s)
+        CFnDK.logger.info('Template Packager diff: ' + @template_file) 
+        CFnDK.logger.info(CFnDK.diff(orgTemplate, @template_body).to_s)
+        CFnDK.logger.debug('Package Template size: ' + @template_body.size.to_s)
         CFnDK.logger.debug('Package Template:' + @template_body)
       end
       @template_body

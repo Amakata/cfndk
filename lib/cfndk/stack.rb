@@ -50,7 +50,6 @@ module CFnDK
       if @tp.large_template?
         hash[:template_url] = @tp.upload_template_file()
       else
-        CFnDK.logger.info((@tp.template_body()).color(:green))
         hash[:template_body] = @tp.template_body()
       end
       @client.create_stack(
