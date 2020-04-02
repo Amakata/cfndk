@@ -72,8 +72,31 @@ module CFnDK
                   'Bucket' => result['bucket'],
                   'Key' => result['key']  
                 }
-              end  
+              end
+            when 'AWS::Serverless::Api' then
+              if properties['DefinitionUri'].kind_of?(String)
+                result = upload_file(File.dirname(@template_file) + '/' + properties['DefinitionUri'].sub(/^\s*.\//, ''))
+                v['Properties']['DefinitionUri'] = {
+                  'Bucket' => result['bucket'],
+                  'Key' => result['key']  
+                }
+              end
+            when 'AWS::ApiGateway::RestApi' then
+              if properties['BodyS3Location'].kind_of?(String)
+                result = upload_file(File.dirname(@template_file) + '/' + properties['BodyS3Location'].sub(/^\s*.\//, ''))
+                v['Properties']['BodyS3Location'] = {
+                  'Bucket' => result['bucket'],
+                  'Key' => result['key']  
+                }
+              end
             end
+            ## TODO support resources
+            # * AWS::AppSync::GraphQLSchema DefinitionS3Location
+            # * AWS::AppSync::Resolver RequestMappingTemplateS3Location
+            # * AWS::AppSync::Resolver ResponseMappingTemplateS3Location
+            # * AWS::ElasticBeanstalk::ApplicationVersion SourceBundle
+            # * AWS::Glue::Job Command ScriptLocation
+            # * AWS::Include Location
           end
         end
 
@@ -87,55 +110,6 @@ module CFnDK
       end
       @template_body
     end
-    
-=begin
-            when 'AWS::ApiGateway::RestApi' then
-            when 'AWS::Serverless::Function' then
-            when 'AWS::AppSync::GraphQLSchema' then
-            when 'AWS::AppSync::Resolver' then
-            when 'AWS::Serverless::Api' then
-            when 'AWS::Include' then
-            when 'AWS::ElasticBeanstalk::ApplicationVersion' then
-            when 'AWS::Glue::Job' then
-=end
-=begin
-          when 'AWS::ApiGateway::RestApi' then
-            if v['Properties'] && v['Properties']['BodyS3Location'] =~ /^\s*./
-              files[k] = { type: v['Type'], path: v['Properties']['BodyS3Location'] }
-            end
-          when 'AWS::Serverless::Function' then
-            if v['Properties'] && v['Properties']['CodeUri'] =~ /^\s*./
-              files[k] = { type: v['Type'], path: v['Properties']['CodeUri'] }
-            end
-          when 'AWS::AppSync::GraphQLSchema' then
-            if v['Properties'] && v['Properties']['DefinitionS3Location'] =~ /^\s*./
-              files[k] = { type: v['Type'], path: v['Properties']['DefinitionS3Location'] }
-            end
-          when 'AWS::AppSync::Resolver' then
-            if v['Properties'] && v['Properties']['RequestMappingTemplateS3Location'] =~ /^\s*./
-              files[k] = { type: v['Type'] + '::RequestMappingTemplateS3Location', path: v['Properties']['RequestMappingTemplateS3Location'] }
-            end
-            if v['Properties'] && v['Properties']['ResponseMappingTemplateS3Location'] =~ /^\s*./
-              files[k] = { type: v['Type'] + '::ResponseMappingTemplateS3Location', path: v['Properties']['ResponseMappingTemplateS3Location'] }
-            end
-          when 'AWS::Serverless::Api' then
-            if v['Properties'] && v['Properties']['DefinitionUri'] =~ /^\s*./
-              files[k] = { type: v['Type'], path: v['Properties']['DefinitionUri'] }
-            end
-          when 'AWS::Include' then
-            if v['Properties'] && v['Properties']['Location'] =~ /^\s*./
-              files[k] = { type: v['Type'], path: v['Properties']['Location'] }
-            end
-          when 'AWS::ElasticBeanstalk::ApplicationVersion' then
-            if v['Properties'] && v['Properties']['SourceBundle'] =~ /^\s*./
-              files[k] = { type: v['Type'], path: v['Properties']['SourceBundle'] }
-            end
-          when 'AWS::Glue::Job' then
-            if v['Properties'] && v['Properties']['Command'] && v['Properties']['Command']['ScriptLocation'] =~ /^\s*./
-              files[k] = { type: v['Type'], path: v['Properties']['Command']['ScriptLocation'] }
-            end
-          end
-=end
 
     private
 
@@ -155,6 +129,23 @@ module CFnDK
 
       @s3_client.put_object(
         body: buffer.string,
+        bucket: bucket_name,
+        key: key
+      )
+      url = "https://s3.amazonaws.com/#{bucket_name}/#{key}"
+      CFnDK.logger.info('Put S3 object: ' + url)
+      {
+        'bucket' => bucket_name,
+        'key' => key
+      }
+    end
+
+    def upload_file(path)
+      create_bucket
+      key = [@global_config.s3_template_hash, path.sub(/^.\//, '')].compact.join('/')
+
+      @s3_client.put_object(
+        body: File.open(path, 'r').read,
         bucket: bucket_name,
         key: key
       )
