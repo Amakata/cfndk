@@ -54,12 +54,12 @@ module CFnDK
             case t
             when 'AWS::CloudFormation::Stack' then
               if properties['TemplateURL'] =~ /^\s*./
-                tp = TemplatePackager.new(properties['TemplateURL'].sub(/^\s*.\//, ''), @region, @package, @global_config, @s3_client, @sts_client)
+                tp = TemplatePackager.new(File.dirname(@template_file) + '/' + properties['TemplateURL'].sub(/^\s*.\//, ''), @region, @package, @global_config, @s3_client, @sts_client)
                 v['Properties']['TemplateURL'] = tp.upload_template_file
               end
             when 'AWS::Lambda::Function' then
               if properties['Code'].kind_of?(String)
-                v['Properties']['Code'] = upload_zip_file(properties['Code'])
+                v['Properties']['Code'] = upload_zip_file(File.dirname(@template_file) + '/' + properties['Code'].sub(/^\s*.\//, ''))
               end
             end
           end
@@ -129,7 +129,7 @@ module CFnDK
 
     def upload_zip_file(path)
       create_bucket
-      key = [@global_config.s3_template_hash, path.sub(/^\s*.\//, '') + ".zip"].compact.join('/')
+      key = [@global_config.s3_template_hash, path + ".zip"].compact.join('/')
 
 
       buffer = Zip::OutputStream.write_buffer do |out|

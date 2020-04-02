@@ -172,6 +172,32 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
+            context 'with stack with directory and nested stack', directory_nested: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc/vpc.yaml
+                  parameter_input: vpc/vpc.json
+                  timeout_in_minutes: 2
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/stack.yaml', 'vpc/vpc.yaml') }
+              before(:each) { copy('%/stack.json', 'vpc/vpc.json') }
+              before(:each) { copy('%/nested_stack.yaml', 'vpc/nested_stack.yaml') }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/nested_stack.yaml})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end            
             context 'with a 51201byte template stack and nested stack', nested: true, big: true, nested_big: true  do
               yaml = <<-"YAML"
               global:
