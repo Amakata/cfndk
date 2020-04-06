@@ -31,7 +31,7 @@ module CFnDK
           key: key
         )
         @is_uploaded = true
-        CFnDK.logger.info('Put S3 object: ' + url)
+        CFnDK.logger.info('Put S3 object: ' + url + ' Size: ' + template_body.size.to_s)
       end
       url
     end
