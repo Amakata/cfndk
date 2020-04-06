@@ -19,10 +19,10 @@ kumogata, SparkleFormation, CoffeeFormation など、CloudFormationのテンプ�
 * CloudFormationでバージョンコントロールシステムと連動した継続的インテグレーションのための基盤対応
 * Keypairの作成/削除
 * コマンド、サブコマンド、冪統性を考慮したコマンドライン体系、オプションの整理、ヘルプの追加
-* チェンジセットの作成/実行/削除/レポート(experimental)
+* チェンジセットの作成/実行/削除/レポート
 * Keypair/スタック毎のregionのサポート
 * 512000バイト以上の大きなテンプレートファイルの場合に自動的にS3にテンプレートファイルをアップロードして処理する機能
-* aws cloudformation package相当の機能(nested templateやlambda functionの自動アップロード)
+* aws cloudformation package相当の機能(nested templateやlambda functionの自動アップロード) (experimental)
 * cfndk全体での共通設定
 
 ## Install
