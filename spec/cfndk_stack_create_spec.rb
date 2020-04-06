@@ -107,9 +107,8 @@ RSpec.describe 'CFnDK', type: :aruba do
                   timeout_in_minutes: 2
               YAML
               before(:each) { write_file(file, yaml) }
-              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/big_vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { append_to_file('vpc.yaml', ' ' * (51200 - file_size('vpc.yaml').to_i)) }
               before(:each) { run_command('cfndk stack create') }
               it 'displays created stack log' do
                 aggregate_failures do
@@ -122,7 +121,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
-            context 'with a 51201byte template stack', big: true do
+            context 'with a 51201byte template stack', big: true, bigbig: true do
               yaml = <<-"YAML"
               global:
               stacks:
@@ -132,9 +131,9 @@ RSpec.describe 'CFnDK', type: :aruba do
                   timeout_in_minutes: 2
               YAML
               before(:each) { write_file(file, yaml) }
-              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/big_vpc.yaml', 'vpc.yaml') }
               before(:each) { copy('%/vpc.json', 'vpc.json') }
-              before(:each) { append_to_file('vpc.yaml', ' ' * (51200 + 1 - file_size('vpc.yaml').to_i)) }
+              before(:each) { append_to_file('vpc.yaml', '1') }
               before(:each) { run_command('cfndk stack create') }
               it 'displays created stack log' do
                 aggregate_failures do
@@ -147,6 +146,183 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
+            context 'with stack and nested stack', nested: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/stack.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/stack.json', 'vpc.json') }
+              before(:each) { copy('%/nested_stack.yaml', 'nested_stack.yaml') }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/nested_stack.yaml})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with stack with directory and nested stack', directory_nested: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc/vpc.yaml
+                  parameter_input: vpc/vpc.json
+                  timeout_in_minutes: 2
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/stack.yaml', 'vpc/vpc.yaml') }
+              before(:each) { copy('%/stack.json', 'vpc/vpc.json') }
+              before(:each) { copy('%/nested_stack.yaml', 'vpc/nested_stack.yaml') }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/nested_stack.yaml})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end            
+            context 'with a 51201byte template stack and nested stack', nested: true, big: true, nested_big: true  do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/stack.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/stack.json', 'vpc.json') }
+              before(:each) { copy('%/nested_stack.yaml', 'nested_stack.yaml') }
+              before(:each) { 
+                append_to_file('vpc.yaml',  "\nOutputs:\n")
+                for number in 1..40 do
+                  stack_append = <<-"YAML"
+                    VpcId012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345#{number.to_s}:
+                      Description: 01234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345678901234567890123
+                      Value: !Ref Vpc
+                      Export:
+                        Name: !Sub ${VpcName}-VpcId012345678900123456789001234567890012345678900123456789001234567890012345678900123456789001234567890012345#{number.to_s}
+                  YAML
+                  append_to_file('vpc.yaml',  stack_append)
+                  # p read('vpc.yaml').join("\n").length
+                end
+              }
+              before(:each) { append_to_file('nested_stack.yaml', "\n" +  '#' * (51200 + 1 - 2 - file_size('nested_stack.yaml').to_i)) }                            
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/vpc.yaml})
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/nested_stack.yaml})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with json stack and json nested stack', nested: true, json: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc.template.json
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/stack.template.json', 'vpc.template.json') }
+              before(:each) { copy('%/stack.json', 'vpc.json') }
+              before(:each) { copy('%/nested_stack.json', 'nested_stack.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/nested_stack.json})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with lambda function and zip file', lambda_function: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: lambda_function.yaml
+                  parameter_input: lambda_function.json
+                  timeout_in_minutes: 2
+                  capabilities:
+                    - CAPABILITY_IAM
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/lambda_function/lambda_function.yaml', 'lambda_function.yaml') }
+              before(:each) { copy('%/lambda_function/lambda_function.json', 'lambda_function.json') }
+              before(:each) { copy('%/lambda_function/index.js', 'lambda_function/index.js') }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/lambda_function.zip})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with serverless function and zip file', serverless_function: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: serverless_function.yaml
+                  parameter_input: serverless_function.json
+                  timeout_in_minutes: 2
+                  capabilities:
+                    - CAPABILITY_AUTO_EXPAND
+                    - CAPABILITY_IAM
+                  package: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/serverless_function/serverless_function.yaml', 'serverless_function.yaml') }
+              before(:each) { copy('%/serverless_function/serverless_function.json', 'serverless_function.json') }
+              before(:each) { copy('%/serverless_function/index.js', 'serverless_function/index.js') }
+              before(:each) { run_command('cfndk stack create') }
+              it 'displays created stack log' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(%r{INFO Put S3 object: https://s3.amazonaws.com/[0-9]+-ap-northeast-1-cfndk-templates/.+/serverless_function.zip})
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end            
             context 'with two stacks' do
               yaml = <<-"YAML"
               stacks:

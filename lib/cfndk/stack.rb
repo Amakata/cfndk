@@ -1,6 +1,6 @@
 module CFnDK
   class Stack
-    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn
+    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn, :package
     def initialize(name, data, option, global_config, credentials)
       @global_config = global_config
       @name = name
@@ -10,12 +10,14 @@ module CFnDK
       @depends = data['depends'] || []
       @region = data['region'] || @global_config.region
       @role_arn = @global_config.role_arn
+      @package = data['package'] || @global_config.package 
       @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
       @override_parameters = data['parameters'] || {}
       @option = option
       @client = Aws::CloudFormation::Client.new(credentials: credentials, region: @region)
       @s3_client = Aws::S3::Client.new(credentials: credentials, region: @region)
       @sts_client = Aws::STS::Client.new(credentials: credentials, region: @region)
+      @tp = CFnDK::TemplatePackager.new(@template_file, @region, @package, @global_config, @s3_client, @sts_client)
     end
 
     def create
@@ -44,10 +46,11 @@ module CFnDK
         tags: tags,
       }
       hash[:role_arn] = @role_arn if @role_arn
-      if large_template?
-        hash[:template_url] = upload_template_file()
+
+      if @tp.large_template?
+        hash[:template_url] = @tp.upload_template_file()
       else
-        hash[:template_body] = template_body()
+        hash[:template_body] = @tp.template_body()
       end
       @client.create_stack(
         hash
@@ -89,10 +92,10 @@ module CFnDK
           capabilities: capabilities,
         }
         hash[:role_arn] = @role_arn if @role_arn
-        if large_template?
-          hash[:template_url] = upload_template_file()
+        if @tp.large_template?
+          hash[:template_url] = @tp.upload_template_file()
         else
-          hash[:template_body] = template_body()
+          hash[:template_body] = @tp.template_body()
         end
         @client.update_stack(
           hash
@@ -183,10 +186,10 @@ module CFnDK
         tags: tags,
       }
       hash[:role_arn] = @role_arn if @role_arn
-      if large_template?
-        hash[:template_url] = upload_template_file()
+      if @tp.large_template?
+        hash[:template_url] = @tp.upload_template_file()
       else
-        hash[:template_body] = template_body()
+        hash[:template_body] = @tp.template_body()
       end
       @client.create_change_set(
         hash
@@ -321,10 +324,10 @@ module CFnDK
       CFnDK.logger.info(('validate stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + @name)
       hash = {}
-      if large_template?
-        hash[:template_url] = upload_template_file()
+      if @tp.large_template?
+        hash[:template_url] = @tp.upload_template_file()
       else
-        hash[:template_body] = template_body()
+        hash[:template_body] = @tp.template_body()
       end
       @client.validate_template(
         hash
@@ -484,14 +487,6 @@ module CFnDK
       [@name, @option[:change_set_uuid]].compact.join('-')
     end
 
-    def template_body
-      File.open(@template_file, 'r').read
-    end
-
-    def large_template?
-      File.size(@template_file) > 51200
-    end
-
     def parameters
       json = JSON.load(open(@parameter_input).read)
       json['Parameters'].map do |item|
@@ -504,47 +499,6 @@ module CFnDK
     end
 
     private
-
-    def upload_template_file
-      begin
-        @s3_client.head_bucket(bucket: bucket_name)
-      rescue Aws::S3::Errors::NotFound, Aws::S3::Errors::Forbidden
-        @s3_client.create_bucket(bucket: bucket_name)
-        CFnDK.logger.info('Creatt S3 bucket: ' + bucket_name)
-        @s3_client.put_bucket_lifecycle_configuration(
-          bucket: bucket_name,
-          lifecycle_configuration: {
-            rules: [
-              {
-                expiration: {
-                  days: 1,
-                },
-                status: 'Enabled',
-                id: 'Delete Old Files',
-                prefix: '',
-                abort_incomplete_multipart_upload: {
-                  days_after_initiation: 1,
-                },
-              },
-            ],
-          }
-        )
-      end
-      key = [@global_config.s3_template_hash, @template_file].compact.join('/')
-      @s3_client.put_object(
-        body: template_body,
-        bucket: bucket_name,
-        key: key
-      )
-      url = "https://s3.amazonaws.com/#{bucket_name}/#{key}"
-      CFnDK.logger.info('Put S3 object: ' + url)
-      url
-    end
-
-    def bucket_name
-      resp = @sts_client.get_caller_identity({})
-      resp.account + '-' + @region + '-' + @global_config.s3_template_bucket
-    end
 
     def colored_status(str)
       case str

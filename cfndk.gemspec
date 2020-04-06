@@ -28,7 +28,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'bundler'
   spec.add_dependency 'thor'
   spec.add_dependency 'rainbow'
+  spec.add_dependency 'rubyzip', '1.3.0'
   spec.add_dependency 'aws-sdk'
   spec.add_dependency 'camelizable'
   spec.add_dependency 'terminal-table'
+  spec.add_dependency 'diff-lcs'
 end

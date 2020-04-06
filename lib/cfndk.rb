@@ -7,11 +7,14 @@ require 'pathname'
 require 'erb'
 require 'yaml'
 require 'json'
+require 'zip'
 require 'aws-sdk'
 require 'terminal-table'
 require 'securerandom'
 require 'logger'
 require 'thor'
+require 'diff/lcs'
+require 'diff/lcs/hunk'
 
 if ENV['CFNDK_COVERAGE']
   require 'simplecov'
@@ -34,6 +37,8 @@ require 'cfndk/key_pair_command'
 require 'cfndk/stack_command'
 require 'cfndk/change_set_command'
 require 'cfndk/command'
+require 'cfndk/template_packager'
+require 'cfndk/diff'
 
 module CFnDK
 end

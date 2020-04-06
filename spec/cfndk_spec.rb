@@ -36,7 +36,7 @@ RSpec.describe 'CFnDK', type: :aruba do
       it 'displays version' do
         aggregate_failures do
           expect(last_command_started).to be_successfully_executed
-          expect(last_command_started).to have_output(/0.1.1/)
+          expect(last_command_started).to have_output(/0.1.2/)
         end
       end
     end
