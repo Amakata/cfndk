@@ -2,6 +2,8 @@ module CFnDK
   class KeyPairCommand < Thor
     include SubcommandHelpReturnable
     include ConfigFileLoadable
+    include CredentialResolvable
+
     class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
     class_option :color, type: :boolean, default: true, desc: 'Use colored output'
     class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
@@ -13,8 +15,8 @@ module CFnDK
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
       keypairs.create
       return 0
@@ -31,8 +33,8 @@ module CFnDK
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
 
       if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)

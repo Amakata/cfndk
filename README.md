@@ -223,6 +223,7 @@ global:
   s3_template_bucket: cfndk-templates
   timeout_in_minutes: 10
   package: true
+  default_profile: profile_name
 keypairs:
   Key1:
     region: us-east-1
@@ -255,6 +256,7 @@ global:
   s3_template_bucket: [String]
   timeout_in_minutes: [Integer]
   package: [Boolean]
+  default_profile: [String]
 keypairs:
   [String]:
     region: [String]
@@ -322,6 +324,10 @@ yaml、jsonの意図しない加工がされる可能性があるためデフォ
       Code: ./lambda_function
 ```
 
+#### default_profile
+
+default_profileで指定されたAWSプロファイルを利用してスタックを作成します。
+AWS_PROFILE環境変数が指定された場合にはAWS_PROFILE環境変数が優先して使用されます。
 
 ### ```keypairs:```
 
