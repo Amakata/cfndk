@@ -2,6 +2,8 @@ module CFnDK
   class Command < Thor
     include Thor::Actions
     include ConfigFileLoadable
+    include CredentialResolvable
+
     class << self
       def exit_on_failure?
         true
@@ -49,8 +51,8 @@ module CFnDK
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
 
@@ -73,8 +75,8 @@ module CFnDK
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
 
@@ -103,8 +105,8 @@ module CFnDK
       CFnDK.logger.info 'report...'.color(:green)
 
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.report
       return 0

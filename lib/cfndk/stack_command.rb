@@ -2,6 +2,7 @@ module CFnDK
   class StackCommand < Thor
     include SubcommandHelpReturnable
     include ConfigFileLoadable
+    include CredentialResolvable
 
     class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
     class_option :color, type: :boolean, default: true, desc: 'Use colored output'
@@ -14,8 +15,8 @@ module CFnDK
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.validate
       stacks.create
@@ -34,8 +35,8 @@ module CFnDK
     def update
       CFnDK.logger.info 'update...'.color(:green)
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.validate
       stacks.update
@@ -54,8 +55,8 @@ module CFnDK
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)
+      credentials = resolve_credential(data, options)
 
-      credentials = CFnDK::CredentialProviderChain.new.resolve
       stacks = CFnDK::Stacks.new(data, options, credentials)
 
       if options[:force] || yes?('Are you sure you want to destroy? (y/n)', :yellow)
@@ -77,7 +78,8 @@ module CFnDK
     def validate
       CFnDK.logger.info 'validate...'.color(:green)
       data = load_config_data(options)
-      credentials = CFnDK::CredentialProviderChain.new.resolve
+      credentials = resolve_credential(data, options)
+
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.validate
       return 0
@@ -95,7 +97,8 @@ module CFnDK
     def report
       CFnDK.logger.info 'report...'.color(:green)
       data = load_config_data(options)
-      credentials = CFnDK::CredentialProviderChain.new.resolve
+      credentials = resolve_credential(data, options)
+
       stacks = CFnDK::Stacks.new(data, options, credentials)
       stacks.report
       return 0
