@@ -1,6 +1,6 @@
 module CFnDK
   class Stack
-    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn, :package
+    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn, :package, :enabled
     def initialize(name, data, option, global_config, credentials)
       @global_config = global_config
       @name = name
@@ -10,7 +10,8 @@ module CFnDK
       @depends = data['depends'] || []
       @region = data['region'] || @global_config.region
       @role_arn = @global_config.role_arn
-      @package = data['package'] || @global_config.package 
+      @package = data['package'] || @global_config.package
+      @enabled = data['enabled'] || true
       @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
       @override_parameters = data['parameters'] || {}
       @option = option
@@ -22,6 +23,7 @@ module CFnDK
 
     def create
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info(('creating stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
@@ -59,6 +61,7 @@ module CFnDK
 
     def wait_until_create
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info(('waiting create stack: ' + name).color(:green))
       begin
         @client.wait_until(
@@ -79,6 +82,7 @@ module CFnDK
 
     def update
       return false if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info(('updating stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + name)
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
@@ -114,6 +118,7 @@ module CFnDK
 
     def wait_until_update
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info(('waiting update stack: ' + name).color(:green))
       @client.wait_until(
         :stack_update_complete,
@@ -127,6 +132,7 @@ module CFnDK
 
     def destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       if exits?
         CFnDK.logger.info(('deleting stack: ' + name).color(:green))
         CFnDK.logger.debug('Name        :' + name)
@@ -145,6 +151,7 @@ module CFnDK
 
     def wait_until_destroy
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       return unless exits?
       CFnDK.logger.info(('waiting delete stack: ' + name).color(:green))
       @client.wait_until(
@@ -159,6 +166,7 @@ module CFnDK
 
     def create_change_set
       return nil if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info(('creating change set: ' + change_set_name).color(:green))
       CFnDK.logger.debug('Parametres  :' + parameters.inspect)
       CFnDK.logger.debug('Capabilities:' + capabilities.inspect)
@@ -207,6 +215,7 @@ module CFnDK
 
     def wait_until_create_change_set
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       return unless exits?
       CFnDK.logger.info(('waiting create change set: ' + change_set_name).color(:green))
       @client.wait_until(
@@ -232,6 +241,7 @@ module CFnDK
 
     def execute_change_set
       return nil if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       if available_change_set?
         CFnDK.logger.info(('executing change set: ' + change_set_name).color(:green))
         @client.execute_change_set(
@@ -248,6 +258,7 @@ module CFnDK
 
     def delete_change_set
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info(('deleting change set: ' + change_set_name).color(:green))
       @client.delete_change_set(
         stack_name: name,
@@ -258,6 +269,7 @@ module CFnDK
 
     def report_change_set
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info('*****************************************************'.color(:green))
       CFnDK.logger.info(('change set: ' + change_set_name).color(:green))
       CFnDK.logger.info('*****************************************************'.color(:green))
@@ -321,6 +333,7 @@ module CFnDK
 
     def validate
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info(('validate stack: ' + name).color(:green))
       CFnDK.logger.debug('Name        :' + @name)
       hash = {}
@@ -376,6 +389,7 @@ module CFnDK
 
     def report
       return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
       CFnDK.logger.info('*****************************************************'.color(:green))
       CFnDK.logger.info(('stack: ' + name).color(:green))
       CFnDK.logger.info('*****************************************************'.color(:green))
