@@ -8,6 +8,7 @@ module CFnDK
       @s3_client = s3_client
       @sts_client = sts_client
       @template_body = nil
+      @is_uploaded = false
     end
 
     def large_template?
@@ -19,16 +20,19 @@ module CFnDK
     end
 
     def upload_template_file
-      create_bucket
-
       key = [@global_config.s3_template_hash, @template_file].compact.join('/')
-      @s3_client.put_object(
-        body: template_body,
-        bucket: bucket_name,
-        key: key
-      )
       url = "https://s3.amazonaws.com/#{bucket_name}/#{key}"
-      CFnDK.logger.info('Put S3 object: ' + url)
+
+      unless @is_uploaded
+        create_bucket
+        @s3_client.put_object(
+          body: template_body,
+          bucket: bucket_name,
+          key: key
+        )
+        @is_uploaded = true
+        CFnDK.logger.info('Put S3 object: ' + url + ' Size: ' + template_body.size.to_s)
+      end
       url
     end
 
