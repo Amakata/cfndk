@@ -97,7 +97,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
-            context 'with a stack and enabled is true' do
+            context 'with a stack and enabled is true', enabled: true do
               yaml = <<-"YAML"
               global:
               stacks:
@@ -121,7 +121,7 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
-            context 'with a stack and enabled is false' do
+            context 'with a stack and enabled is false', enabled: true do
               yaml = <<-"YAML"
               global:
               stacks:

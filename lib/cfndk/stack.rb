@@ -11,7 +11,8 @@ module CFnDK
       @region = data['region'] || @global_config.region
       @role_arn = @global_config.role_arn
       @package = data['package'] || @global_config.package
-      @enabled = data['enabled'] || true
+      @enabled = true
+      @enabled = false if data['enabled'] === false 
       @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
       @override_parameters = data['parameters'] || {}
       @option = option
