@@ -97,6 +97,55 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
+            context 'with a stack and enabled is true', enabled: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  enabled: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'with a stack and enabled is false', enabled: true do
+              yaml = <<-"YAML"
+              global:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  enabled: false
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO create.../)
+                  expect(last_command_started).not_to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).not_to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).not_to have_output(/INFO created stack: Test$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
             context 'with a 51200byte template stack' do
               yaml = <<-"YAML"
               global:

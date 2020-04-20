@@ -277,6 +277,7 @@ stacks:
       - [String]
       - [String]
     package: [Boolean]
+    enabled: [Boolean]
 ```
 
 ### ```global:```
@@ -432,7 +433,7 @@ dependsを指定すると、create,update,create-or-changeset,destoryのコマ�
       - Stack2  
 ```
 
-#### package
+#### package (デフォルト: false)
 
 trueを指定した場合に、
 スタックのテンプレートで、ネステッドスタックや、CloudFormationのコードがローカルパス形式で指定されている場合に
@@ -449,6 +450,10 @@ yaml、jsonの意図しない加工がされる可能性があるためデフォ
     Properties:
       Code: ./lambda_function
 ```
+
+#### enabled　(デフォルト: true)
+
+falseを指定した場合、そのスタックを無視します
 
 #### timeout_in_minutes
 
