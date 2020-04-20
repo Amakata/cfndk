@@ -405,6 +405,141 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
+            context 'with stack and command', global_pre_command: true, global_post_command: true, pre_command: true, post_command: true do
+              yaml = <<-"YAML"
+              global:
+                pre_command: echo "global pre command"
+                post_command: echo "global post command"
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  pre_command: echo "Test pre command"
+                  post_command: echo "Test post command"
+                YAML
+
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO execute global pre command: echo "global pre command"$/)
+                  expect(last_command_started).to have_output(/INFO global pre command$/)
+                  expect(last_command_started).to have_output(/INFO execute pre command: echo "Test pre command"$/)
+                  expect(last_command_started).to have_output(/INFO Test pre command$/)
+                  expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO creating stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO created stack: Test$/)
+                  expect(last_command_started).to have_output(/INFO execute post command: echo "Test post command"$/)
+                  expect(last_command_started).to have_output(/INFO Test post command$/)
+                  expect(last_command_started).to have_output(/INFO execute global post command: echo "global post command"$/)
+                  expect(last_command_started).to have_output(/INFO global post command$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+
+            context 'with stack and error global pre command', global_pre_command: true do
+              yaml = <<-"YAML"
+              global:
+                pre_command: exit 1
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                YAML
+
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).not_to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO execute global pre command: exit 1$/)
+                  expect(last_command_started).to have_output(/ERROR RuntimeError: global pre command is error. status: 1 command: exit 1$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+
+            context 'with stack and error global post command', global_post_command: true do
+              yaml = <<-"YAML"
+              global:
+                post_command: exit 1
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                YAML
+
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).not_to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO execute global post command: exit 1$/)
+                  expect(last_command_started).to have_output(/ERROR RuntimeError: global post command is error. status: 1 command: exit 1$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+
+            context 'with stack and error pre command', pre_command: true do
+              yaml = <<-"YAML"
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  pre_command: exit 1
+                YAML
+
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).not_to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO execute pre command: exit 1$/)
+                  expect(last_command_started).to have_output(/ERROR RuntimeError: pre command is error. status: 1 command: exit 1$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+
+            context 'with stack and error post command', post_command: true do
+              yaml = <<-"YAML"
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  timeout_in_minutes: 2
+                  post_command: exit 1
+                YAML
+
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk stack create') }
+              it do
+                aggregate_failures do
+                  expect(last_command_started).not_to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO execute post command: exit 1$/)
+                  expect(last_command_started).to have_output(/ERROR RuntimeError: post command is error. status: 1 command: exit 1$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+
             context 'when invalid dependency', dependency: true do
               yaml = <<-"YAML"
               stacks:
