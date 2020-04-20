@@ -11,8 +11,8 @@ module CFnDK
       @region = data['region'] || @global_config.region
       @role_arn = @global_config.role_arn
       @package = data['package'] || @global_config.package
-      @pre_command = data['pre_coommand'] || nil
-      @post_command = data['post_coommand'] || nil
+      @pre_command = data['pre_command'] || nil
+      @post_command = data['post_command'] || nil
       @enabled = true
       @enabled = false if data['enabled'] === false 
       @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
@@ -525,7 +525,7 @@ module CFnDK
             CFnDK.logger.info((line).color(:green))
           end
         end
-        raise 'pre command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @pre_command) if $?.exitstatus != 0
+        raise 'pre command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @pre_command if $?.exitstatus != 0
       end
     end
 
@@ -539,7 +539,7 @@ module CFnDK
             CFnDK.logger.info((line).color(:green))
           end
         end
-        raise 'post command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @post_command) if $?.exitstatus != 0
+        raise 'post command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @post_command if $?.exitstatus != 0
       end
     end
 

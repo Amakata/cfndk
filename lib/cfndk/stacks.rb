@@ -115,7 +115,7 @@ module CFnDK
             CFnDK.logger.info((line).color(:green))
           end
         end
-        raise 'global pre command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @global_config.pre_command) if $?.exitstatus != 0
+        raise 'global pre command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @global_config.pre_command if $?.exitstatus != 0
       end
       @sequence.each do |stacks|
         stacks.each do |name|
@@ -137,7 +137,7 @@ module CFnDK
             CFnDK.logger.info((line).color(:green))
           end
         end
-        raise 'global post command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @global_config.post_command) if $?.exitstatus != 0
+        raise 'global post command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @global_config.post_command if $?.exitstatus != 0
       end
     end
 
