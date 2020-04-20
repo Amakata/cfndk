@@ -1,6 +1,6 @@
 module CFnDK
   class GlobalConfig
-    attr_reader :timeout_in_minutes, :s3_template_bucket, :s3_template_hash, :region, :role_arn, :package, :profile
+    attr_reader :timeout_in_minutes, :s3_template_bucket, :s3_template_hash, :region, :role_arn, :package, :profile, :pre_command, :post_command
     def initialize(data, option)
       @timeout_in_minutes = 1
       @s3_template_bucket = 'cfndk-templates'
@@ -15,6 +15,8 @@ module CFnDK
       @package = data['global']['package'] === 'true' ? true : false
       @role_arn = data['global']['role_arn'] || nil
       @profile = ENV['AWS_PROFILE'] || data['global']['profile'] || nil
+      @pre_command = data['global']['pre_command'] || nil
+      @post_command = data['global']['post_command'] || nil
     end
   end
 end

@@ -56,9 +56,11 @@ module CFnDK
       stacks = CFnDK::Stacks.new(data, options, credentials)
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
 
+      stacks.pre_command_execute
       stacks.validate
       keypairs.create
       stacks.create
+      stacks.post_command_execute
       return 0
     rescue => e
       CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)

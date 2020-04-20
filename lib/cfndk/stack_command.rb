@@ -18,8 +18,10 @@ module CFnDK
       credentials = resolve_credential(data, options)
 
       stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.pre_command_execute
       stacks.validate
       stacks.create
+      stacks.post_command_execute
       return 0
     rescue => e
       CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)
@@ -38,8 +40,10 @@ module CFnDK
       credentials = resolve_credential(data, options)
 
       stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.pre_command_execute
       stacks.validate
       stacks.update
+      stacks.post_command_execute
       return 0
     rescue => e
       CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)
@@ -81,7 +85,9 @@ module CFnDK
       credentials = resolve_credential(data, options)
 
       stacks = CFnDK::Stacks.new(data, options, credentials)
+      stacks.pre_command_execute
       stacks.validate
+      stacks.post_command_execute
       return 0
     rescue => e
       CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)
