@@ -17,12 +17,15 @@ module CFnDK
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
       credentials = resolve_credential(data, options)
-
+      global_config = CFnDK::GlobalConfig.new(data, options)
       stacks = CFnDK::Stacks.new(data, options, credentials)
+
+      global_config.pre_command_execute
       stacks.pre_command_execute
       stacks.validate
       stacks.create_change_set
       stacks.post_command_execute
+      global_config.post_command_execute
       return 0
     rescue => e
       CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)
@@ -39,9 +42,8 @@ module CFnDK
       CFnDK.logger.info 'execute...'.color(:green)
       data = load_config_data(options)
       credentials = resolve_credential(data, options)
-
       stacks = CFnDK::Stacks.new(data, options, credentials)
-      stacks.validate
+
       stacks.execute_change_set
       return 0
     rescue => e

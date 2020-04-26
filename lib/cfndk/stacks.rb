@@ -108,15 +108,6 @@ module CFnDK
     end
 
     def pre_command_execute
-      if @global_config.pre_command
-        CFnDK.logger.info(('execute global pre command: ' + @global_config.pre_command).color(:green))
-        IO.popen(@global_config.pre_command, :err => [:child, :out]) do |io|
-          io.each_line do |line|
-            CFnDK.logger.info((line).color(:green))
-          end
-        end
-        raise 'global pre command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @global_config.pre_command if $?.exitstatus != 0
-      end
       @sequence.each do |stacks|
         stacks.each do |name|
           @stacks[name].pre_command_execute
@@ -129,15 +120,6 @@ module CFnDK
         stacks.each do |name|
           @stacks[name].post_command_execute
         end
-      end
-      if @global_config.post_command
-        CFnDK.logger.info(('execute global post command: ' + @global_config.post_command).color(:green))
-        IO.popen(@global_config.post_command, :err => [:child, :out]) do |io|
-          io.each_line do |line|
-            CFnDK.logger.info((line).color(:green))
-          end
-        end
-        raise 'global post command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @global_config.post_command if $?.exitstatus != 0
       end
     end
 

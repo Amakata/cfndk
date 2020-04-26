@@ -52,15 +52,19 @@ module CFnDK
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
       credentials = resolve_credential(data, options)
-
+      global_config = CFnDK::GlobalConfig.new(data, options)
       stacks = CFnDK::Stacks.new(data, options, credentials)
       keypairs = CFnDK::KeyPairs.new(data, options, credentials)
 
+      global_config.pre_command_execute
       stacks.pre_command_execute
       stacks.validate
+      keypairs.pre_command_execute
       keypairs.create
+      keypairs.post_command_execute
       stacks.create
       stacks.post_command_execute
+      global_config.post_command_execute
       return 0
     rescue => e
       CFnDK.logger.error "#{e.class}: #{e.message}".color(:red)

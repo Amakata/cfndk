@@ -263,6 +263,9 @@ keypairs:
   [String]:
     region: [String]
     key_file: [String]
+    enabled: [Boolean]
+    pre_command: [String]
+    post_command: [String]
 stacks:
   [String]:
     region: [String]
@@ -370,6 +373,17 @@ erbの記法が利用できます。
     key_file: key/key<%= append_uuid %>.pem
 ```
 
+#### enabled　(デフォルト: true)
+
+falseを指定した場合、そのkey pairを無視します
+
+#### pre_command
+
+ker pairのcreateの処理の開始前に実施するコマンドを指定します。
+
+#### post_command
+
+key pairのcreateの処理の完了後に実施するコマンドを指定します。
 
 ### ```stacks:```
 

@@ -18,5 +18,29 @@ module CFnDK
       @pre_command = data['global']['pre_command'] || nil
       @post_command = data['global']['post_command'] || nil
     end
+
+    def pre_command_execute
+      if @pre_command
+        CFnDK.logger.info(('execute global pre command: ' + @pre_command).color(:green))
+        IO.popen(@pre_command, :err => [:child, :out]) do |io|
+          io.each_line do |line|
+            CFnDK.logger.info((line).color(:green))
+          end
+        end
+        raise 'global pre command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @pre_command if $?.exitstatus != 0
+      end
+    end
+
+    def post_command_execute
+      if @post_command
+        CFnDK.logger.info(('execute global post command: ' + @post_command).color(:green))
+        IO.popen(@post_command, :err => [:child, :out]) do |io|
+          io.each_line do |line|
+            CFnDK.logger.info((line).color(:green))
+          end
+        end
+        raise 'global post command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @post_command if $?.exitstatus != 0
+      end
+    end
   end
 end
