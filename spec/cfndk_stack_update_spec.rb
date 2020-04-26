@@ -150,51 +150,89 @@ RSpec.describe 'CFnDK', type: :aruba do
                     end
                   end
                 end
-                context 'with different yaml and enabled is true', enabled: true do
-                  yaml = <<-"YAML"
-                  stacks:
-                    Test:
-                      template_file: vpc.yaml
-                      parameter_input: vpc.json
-                      timeout_in_minutes: 2
-                      enabled: true
-                  YAML
-                  before(:each) { write_file(file, yaml) }
-                  before(:each) { run_command_and_stop('cfndk stack create') }
-                  before(:each) { copy('%/vpc_different.yaml', 'vpc.yaml') }
-                  before(:each) { run_command('cfndk stack update') }
-                  it 'displays update log' do
-                    aggregate_failures do
-                      expect(last_command_started).to be_successfully_executed
-                      expect(last_command_started).to have_output(/INFO validate stack: Test$/)
-                      expect(last_command_started).to have_output(/INFO updating stack: Test$/)
-                      expect(last_command_started).to have_output(/INFO updated stack: Test$/)
+              end
+              context 'with a stack and enabled is true' do
+                yaml = <<-"YAML"
+                stacks:
+                  Test:
+                    template_file: vpc.yaml
+                    parameter_input: vpc.json
+                    timeout_in_minutes: 2
+                    enabled: true
+                YAML
+                before(:each) { write_file(file, yaml) }
+                before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+                before(:each) { copy('%/vpc.json', 'vpc.json') }
+                context 'when stack already exist' do
+                  context 'when same yaml' do
+                    before(:each) { run_command_and_stop('cfndk stack create') }
+                    before(:each) { run_command('cfndk stack update') }
+                    it 'displays No update warn' do
+                      aggregate_failures do
+                        expect(last_command_started).to have_exit_status(0)
+                        expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                        expect(last_command_started).to have_output(/INFO updating stack: Test$/)
+                        expect(last_command_started).to have_output(/WARN No updates are to be performed\.: Test$/)
+                      end
+                    end
+                  end
+                  context 'when different yaml' do
+                    before(:each) { run_command_and_stop('cfndk stack create') }
+                    before(:each) { copy('%/vpc_different.yaml', 'vpc.yaml') }
+                    before(:each) { run_command('cfndk stack update') }
+                    before(:each) { append_to_file('vpc.yaml', ' ' * (51200 + 1 - file_size('vpc.yaml').to_i)) }
+                    it 'displays update log' do
+                      aggregate_failures do
+                        expect(last_command_started).to be_successfully_executed
+                        expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                        expect(last_command_started).to have_output(/INFO updating stack: Test$/)
+                        expect(last_command_started).to have_output(/INFO updated stack: Test$/)
+                      end
                     end
                   end
                 end
-                context 'with different yaml and enabled is false', enabled: true do
-                  yaml = <<-"YAML"
-                  global:
-                  stacks:
-                    Test:
-                      template_file: vpc.yaml
-                      parameter_input: vpc.json
-                      timeout_in_minutes: 2
-                      enabled: false
-                  YAML
-                  before(:each) { write_file(file, yaml) }
-                  before(:each) { run_command_and_stop('cfndk stack create') }
-                  before(:each) { copy('%/vpc_different.yaml', 'vpc.yaml') }
-                  before(:each) { run_command('cfndk stack update') }
-                  it do
-                    aggregate_failures do
-                      expect(last_command_started).to be_successfully_executed
-                      expect(last_command_started).not_to have_output(/INFO validate stack: Test$/)
-                      expect(last_command_started).not_to have_output(/INFO updating stack: Test$/)
-                      expect(last_command_started).not_to have_output(/INFO updated stack: Test$/)
+              end
+              context 'with a stack and enabled is false', enabled: true do
+                yaml = <<-"YAML"
+                stacks:
+                  Test:
+                    template_file: vpc.yaml
+                    parameter_input: vpc.json
+                    timeout_in_minutes: 2
+                    enabled: false
+                YAML
+                before(:each) { write_file(file, yaml) }
+                before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+                before(:each) { copy('%/vpc.json', 'vpc.json') }
+                context 'when stack already exist' do
+                  context 'when same yaml' do
+                    before(:each) { run_command_and_stop('cfndk stack create') }
+                    before(:each) { run_command('cfndk stack update') }
+                    it 'displays No update warn' do
+                      aggregate_failures do
+                        expect(last_command_started).to have_exit_status(0)
+                        expect(last_command_started).to have_output(/INFO update...$/)
+                        expect(last_command_started).not_to have_output(/INFO validate stack: Test$/)
+                        expect(last_command_started).not_to have_output(/INFO updating stack: Test$/)
+                        expect(last_command_started).not_to have_output(/WARN No updates are to be performed\.: Test$/)
+                      end
                     end
                   end
-                  after(:each) { run_command('cfndk destroy -f') }
+                  context 'when different yaml' do
+                    before(:each) { run_command_and_stop('cfndk stack create') }
+                    before(:each) { copy('%/vpc_different.yaml', 'vpc.yaml') }
+                    before(:each) { run_command('cfndk stack update') }
+                    before(:each) { append_to_file('vpc.yaml', ' ' * (51200 + 1 - file_size('vpc.yaml').to_i)) }
+                    it 'displays update log' do
+                      aggregate_failures do
+                        expect(last_command_started).to be_successfully_executed
+                        expect(last_command_started).to have_output(/INFO update...$/)
+                        expect(last_command_started).not_to have_output(/INFO validate stack: Test$/)
+                        expect(last_command_started).not_to have_output(/INFO updating stack: Test$/)
+                        expect(last_command_started).not_to have_output(/INFO updated stack: Test$/)
+                      end
+                    end
+                  end
                 end
               end
               context 'when stack does not exist' do
