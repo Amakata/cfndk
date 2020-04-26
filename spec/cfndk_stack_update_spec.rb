@@ -150,6 +150,52 @@ RSpec.describe 'CFnDK', type: :aruba do
                     end
                   end
                 end
+                context 'with different yaml and enabled is true', enabled: true do
+                  yaml = <<-"YAML"
+                  stacks:
+                    Test:
+                      template_file: vpc.yaml
+                      parameter_input: vpc.json
+                      timeout_in_minutes: 2
+                      enabled: true
+                  YAML
+                  before(:each) { write_file(file, yaml) }
+                  before(:each) { run_command_and_stop('cfndk stack create') }
+                  before(:each) { copy('%/vpc_different.yaml', 'vpc.yaml') }
+                  before(:each) { run_command('cfndk stack update') }
+                  it 'displays update log' do
+                    aggregate_failures do
+                      expect(last_command_started).to be_successfully_executed
+                      expect(last_command_started).to have_output(/INFO validate stack: Test$/)
+                      expect(last_command_started).to have_output(/INFO updating stack: Test$/)
+                      expect(last_command_started).to have_output(/INFO updated stack: Test$/)
+                    end
+                  end
+                end
+                context 'with different yaml and enabled is false', enabled: true do
+                  yaml = <<-"YAML"
+                  global:
+                  stacks:
+                    Test:
+                      template_file: vpc.yaml
+                      parameter_input: vpc.json
+                      timeout_in_minutes: 2
+                      enabled: false
+                  YAML
+                  before(:each) { write_file(file, yaml) }
+                  before(:each) { run_command_and_stop('cfndk stack create') }
+                  before(:each) { copy('%/vpc_different.yaml', 'vpc.yaml') }
+                  before(:each) { run_command('cfndk stack update') }
+                  it do
+                    aggregate_failures do
+                      expect(last_command_started).to be_successfully_executed
+                      expect(last_command_started).not_to have_output(/INFO validate stack: Test$/)
+                      expect(last_command_started).not_to have_output(/INFO updating stack: Test$/)
+                      expect(last_command_started).not_to have_output(/INFO updated stack: Test$/)
+                    end
+                  end
+                  after(:each) { run_command('cfndk destroy -f') }
+                end
               end
               context 'when stack does not exist' do
                 before(:each) { run_command('cfndk stack update') }

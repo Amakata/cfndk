@@ -153,6 +153,70 @@ RSpec.describe 'CFnDK', type: :aruba do
               end
               after(:each) { run_command('cfndk destroy -f') }
             end
+            context 'when keyparis and stacks exist and enabled is true', enabled: true do
+              yaml = <<-"YAML"
+              keypairs:
+                Test1:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  parameters:
+                    VpcName: sample<%= append_uuid%>
+                  timeout_in_minutes: 2
+                  enabled: true
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk create') }
+              before(:each) { stop_all_commands }
+              before(:each) { run_command('cfndk stack destroy') }
+              before(:each) { type('yes') }
+              before(:each) { stop_all_commands }
+              it 'displays confirm message and delete message' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO destroy../)
+                  expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
+                  expect(last_command_started).not_to have_output(/INFO deleted keypair: Test1$/)
+                  expect(last_command_started).to have_output(/INFO deleted stack: Test$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end
+            context 'when keyparis and stacks exist and enabled is false', enabled: true do
+              yaml = <<-"YAML"
+              keypairs:
+                Test1:
+              stacks:
+                Test:
+                  template_file: vpc.yaml
+                  parameter_input: vpc.json
+                  parameters:
+                    VpcName: sample<%= append_uuid%>
+                  timeout_in_minutes: 2
+                  enabled: false
+              YAML
+              before(:each) { write_file(file, yaml) }
+              before(:each) { copy('%/vpc.yaml', 'vpc.yaml') }
+              before(:each) { copy('%/vpc.json', 'vpc.json') }
+              before(:each) { run_command('cfndk create') }
+              before(:each) { stop_all_commands }
+              before(:each) { run_command('cfndk stack destroy') }
+              before(:each) { type('yes') }
+              before(:each) { stop_all_commands }
+              it 'displays confirm message and delete message' do
+                aggregate_failures do
+                  expect(last_command_started).to be_successfully_executed
+                  expect(last_command_started).to have_output(/INFO destroy../)
+                  expect(last_command_started).to have_output(%r{Are you sure you want to destroy\? \(y/n\)})
+                  expect(last_command_started).not_to have_output(/INFO deleted keypair: Test1$/)
+                  expect(last_command_started).not_to have_output(/INFO deleted stack: Test$/)
+                end
+              end
+              after(:each) { run_command('cfndk destroy -f') }
+            end            
           end
         end
       end
