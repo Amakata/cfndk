@@ -1,6 +1,6 @@
 module CFnDK
   class Stack
-    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn, :package, :enabled
+    attr_reader :template_file, :parameter_input, :capabilities, :depends, :timeout_in_minutes, :region, :role_arn, :package, :enabled, :pre_command, :post_command
     def initialize(name, data, option, global_config, credentials)
       @global_config = global_config
       @name = name
@@ -11,6 +11,8 @@ module CFnDK
       @region = data['region'] || @global_config.region
       @role_arn = @global_config.role_arn
       @package = data['package'] || @global_config.package
+      @pre_command = data['pre_command'] || nil
+      @post_command = data['post_command'] || nil
       @enabled = true
       @enabled = false if data['enabled'] === false 
       @timeout_in_minutes = data['timeout_in_minutes'] || @global_config.timeout_in_minutes
@@ -511,6 +513,34 @@ module CFnDK
           parameter_value: eval_override_parameter(item['ParameterKey'], item['ParameterValue']),
         }
       end.compact
+    end
+
+    def pre_command_execute
+      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
+      if @pre_command
+        CFnDK.logger.info(('execute pre command: ' + @pre_command).color(:green))
+        IO.popen(@pre_command, :err => [:child, :out]) do |io|
+          io.each_line do |line|
+            CFnDK.logger.info((line).color(:green))
+          end
+        end
+        raise 'pre command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @pre_command if $?.exitstatus != 0
+      end
+    end
+
+    def post_command_execute
+      return if @option[:stack_names].instance_of?(Array) && !@option[:stack_names].include?(@name)
+      return unless @enabled
+      if @post_command
+        CFnDK.logger.info(('execute post command: ' + @post_command).color(:green))
+        IO.popen(@post_command, :err => [:child, :out]) do |io|
+          io.each_line do |line|
+            CFnDK.logger.info((line).color(:green))
+          end
+        end
+        raise 'post command is error. status: ' + $?.exitstatus.to_s + ' command: ' + @post_command if $?.exitstatus != 0
+      end
     end
 
     private

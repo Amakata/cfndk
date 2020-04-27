@@ -107,6 +107,22 @@ module CFnDK
       end
     end
 
+    def pre_command_execute
+      @sequence.each do |stacks|
+        stacks.each do |name|
+          @stacks[name].pre_command_execute
+        end
+      end
+    end
+
+    def post_command_execute
+      @sequence.each do |stacks|
+        stacks.each do |name|
+          @stacks[name].post_command_execute
+        end
+      end
+    end
+
     private
 
     def prepare_stack(data)

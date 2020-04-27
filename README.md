@@ -257,10 +257,15 @@ global:
   timeout_in_minutes: [Integer]
   package: [Boolean]
   default_profile: [String]
+  pre_command: [String]
+  post_command: [String]
 keypairs:
   [String]:
     region: [String]
     key_file: [String]
+    enabled: [Boolean]
+    pre_command: [String]
+    post_command: [String]
 stacks:
   [String]:
     region: [String]
@@ -278,6 +283,8 @@ stacks:
       - [String]
     package: [Boolean]
     enabled: [Boolean]
+    pre_command: [String]
+    post_command: [String]
 ```
 
 ### ```global:```
@@ -330,6 +337,14 @@ yaml、jsonの意図しない加工がされる可能性があるためデフォ
 default_profileで指定されたAWSプロファイルを利用してスタックを作成します。
 AWS_PROFILE環境変数が指定された場合にはAWS_PROFILE環境変数が優先して使用されます。
 
+#### pre_command
+
+スタックのcreate、updateやチェンジセットのcreateで、処理の開始前に実施するコマンドを指定します。
+
+#### post_command
+
+スタックのcreate、updateやチェンジセットのcreateで、処理の完了後に実施するコマンドを指定します。
+
 ### ```keypairs:```
 
 ```
@@ -358,6 +373,17 @@ erbの記法が利用できます。
     key_file: key/key<%= append_uuid %>.pem
 ```
 
+#### enabled　(デフォルト: true)
+
+falseを指定した場合、そのkey pairを無視します
+
+#### pre_command
+
+ker pairのcreateの処理の開始前に実施するコマンドを指定します。
+
+#### post_command
+
+key pairのcreateの処理の完了後に実施するコマンドを指定します。
 
 ### ```stacks:```
 
@@ -462,6 +488,14 @@ falseを指定した場合、そのスタックを無視します
 ```
     timeout_in_minutes: 5
 ```
+
+#### pre_command
+
+スタックのcreate、updateやチェンジセットのcreateで、処理の開始前に実施するコマンドを指定します。
+
+#### post_command
+
+スタックのcreate、updateやチェンジセットのcreateで、処理の完了後に実施するコマンドを指定します。
 
 
 ### erbで使用できるメソッド

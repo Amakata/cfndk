@@ -21,6 +21,18 @@ module CFnDK
       end
     end
 
+    def pre_command_execute
+      @keypairs.each_value do |keypair|
+        keypair.pre_command_execute
+      end
+    end
+
+    def post_command_execute
+      @keypairs.each_value do |keypair|
+        keypair.post_command_execute
+      end
+    end
+
     private
 
     def prepare_keypairs(data)
