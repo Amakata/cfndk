@@ -70,7 +70,7 @@ module CFnDK
       profile_name ||= ENV['AWS_PROFILE'].nil? ? 'default' : ENV['AWS_PROFILE']
 
       config = ::Aws.shared_config
-      if config.config_enabled? && process_provider = config.credentials_process(profile_name)
+      if config.config_enabled? && process_provider = config.credential_process(profile_name)
         ::Aws::ProcessCredentials.new(process_provider)
       else
         nil

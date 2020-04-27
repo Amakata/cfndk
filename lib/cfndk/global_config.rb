@@ -14,7 +14,7 @@ module CFnDK
       @region = data['global']['region'] || ENV['AWS_REGION'] || 'us-east-1'
       @package = data['global']['package'] === 'true' ? true : false
       @role_arn = data['global']['role_arn'] || nil
-      @profile = ENV['AWS_PROFILE'] || data['global']['profile'] || nil
+      @profile = ENV['AWS_PROFILE'] || data['global']['default_profile'] || nil
       @pre_command = data['global']['pre_command'] || nil
       @post_command = data['global']['post_command'] || nil
     end
