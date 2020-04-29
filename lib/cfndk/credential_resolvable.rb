@@ -4,9 +4,7 @@ module CFnDK
 
     def resolve_credential(data, option)
       global_config = CFnDK::GlobalConfig.new(data, option)
-      config = OpenStruct.new
-      config.profile = global_config.profile
-      CFnDK::CredentialProviderChain.new(config).resolve
+      CFnDK::CredentialProviderChain.new(global_config.profile).resolve
     end
   end
 end
