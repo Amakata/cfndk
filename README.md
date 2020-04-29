@@ -222,6 +222,7 @@ global:
   region: ap-northeast-1
   s3_template_bucket: cfndk-templates
   timeout_in_minutes: 10
+  role_arn: arn:aws:iam::XXXXXXXXXXX:role/XXXXXXXXXXXXX
   package: true
   default_profile: profile_name
 keypairs:
@@ -300,6 +301,10 @@ AWS_REGIONも指定されない場合はus-east-1を利用します。
 #### timeout_in_minutes (デフォルト: 1)
 
 全体で利用するタイムアウト時間を分で指定します。
+
+#### role_arn
+
+利用するロールのARN
 
 #### s3_template_bucket (デフォルト: cfndk-templates)
 
