@@ -10,5 +10,5 @@ docker run \
   -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
   -w /home/cfndk \
-  -it cfndk:latest \
+  -it amakata/cfndk:latest \
   "$@"
