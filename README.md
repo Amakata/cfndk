@@ -520,6 +520,27 @@ falseを指定した場合、そのスタックを無視します
 
     オプション```--properties```で指定したキーに対応する値を参照することができます。
 
+## Execution Environment
+
+### Vagrant
+
+Vagrantを利用してLinux環境とcfndkのインストールを行うリファレンス環境を用意しました。
+
+```
+cd vagrant
+vagrant up
+vagrant ssh
+```
+
+### Docker
+
+gemで直接インストールする代わりに、Dockerコンテナを利用して、cfndkコマンドを実行できるようにします。
+
+```
+cp docker/cfndk.sh /usr/local/bin/cfndk.sh
+chmod +x /usr/local/bin/cfndk.sh
+AWS_PROFILE=default cfndk.sh help
+```
 
 ## Test
 
