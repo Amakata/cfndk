@@ -13,6 +13,7 @@ module CFnDK
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     option :change_set_uuid, type: :string, default: ENV['CFNDK_CHANGE_SET_UUID'] || nil, desc: 'Use Change Set UUID'
     option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
@@ -38,6 +39,7 @@ module CFnDK
     desc 'execute', 'Execute change set'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     option :change_set_uuid, type: :string, default: ENV['CFNDK_CHANGE_SET_UUID'] || nil, desc: 'Use Change Set UUID'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def execute
       CFnDK.logger.info 'execute...'.color(:green)
       data = load_config_data(options)
@@ -58,6 +60,7 @@ module CFnDK
     option :force, type: :boolean, aliases: 'f', default: false, desc: 'Say yes to all prompts for confirmation'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     option :change_set_uuid, type: :string, default: ENV['CFNDK_CHANGE_SET_UUID'] || nil, desc: 'Use Change Set UUID'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def destroy
       CFnDK.logger.info 'destroy...'.color(:green)
       data = load_config_data(options)

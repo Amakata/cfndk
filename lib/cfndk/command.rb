@@ -48,6 +48,7 @@ module CFnDK
     option :properties, type: :hash, aliases: 'p', default: {}, desc: 'Set property'
     option :stack_names, type: :array, desc: 'Target stack names'
     option :keypair_names, type: :array, desc: 'Target keypair names'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def create
       CFnDK.logger.info 'create...'.color(:green)
       data = load_config_data(options)
@@ -107,6 +108,7 @@ module CFnDK
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'
     option :stack_names, type: :array, desc: 'Target stack names'
     option :types, type: :array, default: %w(tag output parameter resource event), desc: 'Report type'
+    option :dry_run, type: :string, default: nil, lazy_default: "#{Dir.getwd}/dryrun.log", desc: 'Use dry run'
     def report
       CFnDK.logger.info 'report...'.color(:green)
 
