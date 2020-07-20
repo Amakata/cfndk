@@ -127,7 +127,7 @@ module CFnDK
       buffer = Zip::OutputStream.write_buffer do |out|
         Dir.glob(path + '/**/*') do |file|
           if (!File.directory?(file))
-            out.put_next_entry(file)
+            out.put_next_entry(file.delete_prefix(path + '/'))
             out.write(File.open(file, 'r').read)
           end
         end
