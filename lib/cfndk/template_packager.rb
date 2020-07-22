@@ -1,3 +1,7 @@
+using Polyfill(
+  String: %w[#delete_prefix]
+)
+
 module CFnDK
   class TemplatePackager
     def initialize(template_file, region, package, global_config, s3_client, sts_client)
