@@ -33,4 +33,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'camelizable'
   spec.add_dependency 'terminal-table'
   spec.add_dependency 'diff-lcs'
+  spec.add_dependency 'polyfill'
 end

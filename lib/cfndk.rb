@@ -16,6 +16,12 @@ require 'logger'
 require 'thor'
 require 'diff/lcs'
 require 'diff/lcs/hunk'
+require 'polyfill'
+
+using Polyfill(
+  String: %w[#delete_prefix]
+)
+
 
 if ENV['CFNDK_COVERAGE']
   require 'simplecov'
