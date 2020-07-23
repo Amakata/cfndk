@@ -7,7 +7,7 @@ module CFnDK
     class_option :verbose, type: :boolean, aliases: 'v', desc: 'More verbose output.'
     class_option :color, type: :boolean, default: true, desc: 'Use colored output'
     class_option :config_path, type: :string, aliases: 'c', default: "#{Dir.getwd}/cfndk.yml", desc: 'The configuration file to use'
-    class_option :stack_names, type: :array, desc: 'Target stack names'
+    class_option :stack_names, type: :array, aliases: 's', desc: 'Target stack names'
 
     desc 'create', 'Create stack'
     option :uuid, type: :string, aliases: 'u', default: ENV['CFNDK_UUID'] || nil, desc: 'Use UUID'

@@ -16,6 +16,7 @@ require 'logger'
 require 'thor'
 require 'diff/lcs'
 require 'diff/lcs/hunk'
+require 'polyfill'
 
 if ENV['CFNDK_COVERAGE']
   require 'simplecov'
